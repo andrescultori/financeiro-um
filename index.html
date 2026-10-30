@@ -87,7 +87,7 @@
     gap:20px;
     flex-wrap:wrap;
   }
-  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand{ display:flex; align-items:flex-start; gap:14px; }
   .brand-mark{
     width:40px;height:40px;border-radius:10px;
     background: linear-gradient(135deg, var(--credit), var(--saldo));
@@ -109,12 +109,19 @@
   }
   .subtitle{ color:var(--text-dim); font-size:13px; margin-top:2px;}
 
-  .header-controls{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
-  .user-bar{ display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-faint); }
+  .header-controls{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; min-width:0; }
+  .header-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:flex-end; min-width:0; }
+  .header-meta{ display:flex; flex-direction:column; gap:2px; margin-top:8px; }
+  .header-chips-row{ display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+  .user-bar{ display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-faint); min-width:0; }
+  .user-bar span{
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px;
+  }
   .user-bar button{
     border:1px solid var(--border); background:transparent; color:var(--text-dim);
     font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px;
     padding:4px 12px; border-radius:7px; cursor:pointer;
+    flex-shrink:0;
   }
   .user-bar button:hover{ color:var(--text); background:var(--panel-2); }
   .nav-tabs, .year-toggle{
@@ -232,6 +239,7 @@
     background:var(--panel-2); border:1px solid var(--credit);
     color:var(--text); font-size:12.5px; font-weight:600;
     padding:6px 10px 6px 12px; border-radius:20px;
+    margin-bottom:20px;
   }
   .filter-chip button{
     background:none; border:none; color:var(--text-dim); cursor:pointer;
@@ -297,8 +305,20 @@
     .bottom-row{ grid-template-columns:1fr; }
     .combo-layout{ grid-template-columns:1fr; }
     body{ padding:24px 18px 40px; }
-    header{ flex-direction:column; }
-    .header-controls{ align-items:flex-start; width:100%; }
+  }
+
+  /* ---------- Cabeçalho em coluna única (celular) ---------- */
+  @media (max-width: 640px){
+    header{ flex-direction:column; align-items:stretch; }
+    .header-controls{ align-items:stretch; width:100%; }
+    .header-row{ justify-content:flex-start; width:100%; }
+    .header-row-1{ flex-direction:column-reverse; align-items:stretch; gap:10px; }
+    .header-row-1 .nav-tabs{ width:100%; }
+    .header-row-1 .nav-tabs button{ flex:1; }
+    .header-row-1 .user-bar{ justify-content:space-between; }
+    .header-row-2{ width:100%; }
+    .header-chips-row{ justify-content:flex-start; }
+    .user-bar span{ max-width:52vw; }
     .cc-filter-panel{ right:auto; left:0; width:min(260px, 100%); }
   }
 </style>
@@ -333,10 +353,18 @@
       <div>
         <h1>Financeiro UniMissional</h1>
         <div class="subtitle" style="font-family:'Merriweather',serif; font-style:italic;">Créditos, débitos e saldo — base NIBO</div>
+        <div class="header-meta">
+          <div class="period-note" id="periodNote"></div>
+          <div class="period-note" id="updatedNote"></div>
+        </div>
       </div>
     </div>
     <div class="header-controls">
-      <div class="nav-tabs" id="navTabs"></div>
+      <div class="header-row header-row-1">
+        <div class="nav-tabs" id="navTabs"></div>
+        <div class="user-bar"><span id="userEmail"></span><button id="logoutBtn" type="button">Sair</button></div>
+      </div>
+      <div class="header-row header-row-2">
       <div class="year-toggle" id="yearToggle"></div>
       <select class="month-select" id="monthSelect" style="display:none;"></select>
       <div class="cc-filter" id="ccFilter" style="display:none;">
@@ -352,19 +380,19 @@
           <div class="cc-filter-list" id="ccFilterList"></div>
         </div>
       </div>
-      <div class="filter-chip" id="ccChip">
-        <span id="ccChipLabel"></span>
-        <button id="ccChipClear" title="Limpar filtro de centro de custo">✕</button>
       </div>
-      <div class="filter-chip" id="filterChip">
-        <span id="filterChipLabel"></span>
-        <button id="filterChipClear" title="Limpar filtro">✕</button>
-      </div>
-      <div class="period-note" id="periodNote"></div>
-      <div class="period-note" id="updatedNote"></div>
-      <div class="user-bar"><span id="userEmail"></span><button id="logoutBtn" type="button">Sair</button></div>
     </div>
   </header>
+  <div class="header-chips-row">
+    <div class="filter-chip" id="ccChip">
+      <span id="ccChipLabel"></span>
+      <button id="ccChipClear" title="Limpar filtro de centro de custo">✕</button>
+    </div>
+    <div class="filter-chip" id="filterChip">
+      <span id="filterChipLabel"></span>
+      <button id="filterChipClear" title="Limpar filtro">✕</button>
+    </div>
+  </div>
 
   <!-- ======================= PÁGINA 1 — VISÃO ANUAL ======================= -->
   <div id="pageAnnual">
@@ -561,7 +589,9 @@ async function loadDataOrDeny(session){
   BASE_DATA = data.dados;
   DATA = BASE_DATA;
   DATA_UPDATED_AT = data.atualizado_em;
-  document.getElementById('userEmail').textContent = email;
+  const userEmailEl = document.getElementById('userEmail');
+  userEmailEl.textContent = email;
+  userEmailEl.title = email;
   unlockApp();
 }
 
@@ -622,6 +652,12 @@ const fmtCompact = (v) => {
   return sign + abs.toFixed(0);
 };
 const round2 = (v) => Math.round(v*100)/100;
+
+const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const INTRO_DURATION = REDUCED_MOTION ? 0 : 500;
+
+function monthShortLabel(m){ const [y, mm] = m.split('-'); return MONTH_ABBR[parseInt(mm,10)-1] + '/' + y; }
+function dayLabel(d){ return 'dia ' + d.split('-')[2]; }
 
 function monthsOfYear(year){ return Object.keys(DATA.monthly).filter(k => k.startsWith(String(year))).sort(); }
 function allMonthsSorted(){ return Object.keys(DATA.monthly).sort(); }
@@ -686,18 +722,62 @@ const valueLabelPlugin = {
 };
 Chart.register(valueLabelPlugin);
 
-function renderSpark(canvasId, values, lineColor, fillTop, fillBottom){
+/* Linha-guia (crosshair) que só aparece no hover/toque, e só depois que a
+   animação de entrada do gráfico termina (chart.$introDone, marcado pelo
+   próprio animation.onComplete de cada gráfico). Vertical nos gráficos
+   normais, horizontal nas barras deitadas (indexAxis:'y'). */
+const crosshairPlugin = {
+  id: 'crosshair',
+  beforeDatasetsDraw(chart){
+    if (!chart.$introDone) return;
+    const active = chart.getActiveElements ? chart.getActiveElements() : [];
+    if (!active || !active.length) return;
+    const {ctx, chartArea} = chart;
+    if (!chartArea) return;
+    const isHorizontal = chart.options.indexAxis === 'y';
+    const el = active[0].element;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(210,214,230,0.18)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    if (isHorizontal) {
+      ctx.moveTo(chartArea.left, el.y);
+      ctx.lineTo(chartArea.right, el.y);
+    } else {
+      ctx.moveTo(el.x, chartArea.top);
+      ctx.lineTo(el.x, chartArea.bottom);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+};
+Chart.register(crosshairPlugin);
+
+function markIntroDone(){
+  return { onComplete(ctx){ ctx.chart.$introDone = true; } };
+}
+
+function renderSpark(canvasId, values, lineColor, fillTop, fillBottom, labels){
   destroyChart(canvasId);
+  const pointLabels = labels || values.map((_,i)=>String(i));
   const ctx = document.getElementById(canvasId).getContext('2d');
   charts[canvasId] = new Chart(ctx, {
     type:'line',
     data:{
-      labels: values.map((_,i)=>i),
+      labels: pointLabels,
       datasets:[{
         data: values,
         borderColor: lineColor,
         borderWidth: 2,
         pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHitRadius: 10,
+        pointBackgroundColor: lineColor,
+        pointHoverBackgroundColor: lineColor,
+        pointBorderColor: '#171A24',
+        pointHoverBorderColor: '#171A24',
+        pointHoverBorderWidth: 2,
         tension: 0.35,
         fill: true,
         backgroundColor: (context) => {
@@ -709,8 +789,22 @@ function renderSpark(canvasId, values, lineColor, fillTop, fillBottom){
     },
     options:{
       responsive:true, maintainAspectRatio:false,
-      animation:{duration:400},
-      plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+      animation:{ duration: INTRO_DURATION, ...markIntroDone() },
+      hover:{ animationDuration: 0 },
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          enabled:true,
+          backgroundColor:'#20232F', borderColor:'#2E3346', borderWidth:1,
+          titleColor:'#F1F2F7', bodyColor:'#D3D6E0', padding:8, boxPadding:3,
+          titleFont:{ size:11 }, bodyFont:{ size:11 }, displayColors:false,
+          callbacks:{
+            title: (items) => pointLabels[items[0].dataIndex],
+            label: (c) => fmtBRLsigned(c.raw)
+          }
+        }
+      },
       scales:{ x:{ display:false }, y:{ display:false } },
       elements:{ line:{ borderJoinStyle:'round' } }
     }
@@ -998,6 +1092,8 @@ function renderCombo(year){
           type:'line', label: isFiltered() ? 'Total acumulado' : 'Saldo acumulado', data: series.cum,
           borderColor: '#F1558E', backgroundColor:'#F1558E',
           borderWidth: 2.5, pointRadius: 3, pointBackgroundColor:'#F1558E',
+          pointHoverRadius: 7, pointHoverBackgroundColor:'#F1558E',
+          pointHoverBorderColor:'#171A24', pointHoverBorderWidth: 2,
           tension: 0.3, order:1, yAxisID:'y',
           showLabels:true, labelColor:'#F697BA', labelFmt: fmtCompact
         }
@@ -1005,6 +1101,8 @@ function renderCombo(year){
     },
     options:{
       responsive:true, maintainAspectRatio:false,
+      animation:{ duration: INTRO_DURATION, ...markIntroDone() },
+      hover:{ animationDuration: 0 },
       interaction:{ mode:'index', intersect:false },
       layout:{ padding:{ top:16 } },
       plugins:{
@@ -1074,6 +1172,8 @@ function renderCategoryBars(canvasId, entries, color, labelColor){
     options:{
       indexAxis:'y',
       responsive:true, maintainAspectRatio:false,
+      animation:{ duration: INTRO_DURATION, ...markIntroDone() },
+      hover:{ animationDuration: 0 },
       layout:{ padding:{ right:46 } },
       onClick: (evt, elements) => {
         if (!elements.length) return;
@@ -1146,9 +1246,10 @@ function renderAnnual(year){
     if (activeCategory) { const v = monthValues(m); runningW = round2(runningW + v.credit + v.debit); return runningW; }
     return DATA.monthly[m].cum;
   });
-  renderSpark('sparkCredit', windowCredit, '#A98FE0', 'rgba(169,143,224,0.28)', 'rgba(169,143,224,0)');
-  renderSpark('sparkDebit', windowDebit, '#FF8529', 'rgba(255,133,41,0.28)', 'rgba(255,133,41,0)');
-  renderSpark('sparkSaldo', windowCum, '#F1558E', 'rgba(241,85,142,0.28)', 'rgba(241,85,142,0)');
+  const windowLabels = windowMonths.map(monthShortLabel);
+  renderSpark('sparkCredit', windowCredit, '#A98FE0', 'rgba(169,143,224,0.28)', 'rgba(169,143,224,0)', windowLabels);
+  renderSpark('sparkDebit', windowDebit, '#FF8529', 'rgba(255,133,41,0.28)', 'rgba(255,133,41,0)', windowLabels);
+  renderSpark('sparkSaldo', windowCum, '#F1558E', 'rgba(241,85,142,0.28)', 'rgba(241,85,142,0)', windowLabels);
 
   const emptyFiltered = isFiltered() && series.credit.every(v => v === 0) && series.debit.every(v => v === 0);
   document.getElementById('emptyFilterNoticeAnnual').style.display = emptyFiltered ? 'block' : 'none';
@@ -1196,12 +1297,16 @@ function renderDailyCombo(monthKey){
           type:'line', label: isFiltered() ? 'Total acumulado' : 'Saldo acumulado', data: series.cum,
           borderColor: '#F1558E', backgroundColor:'#F1558E',
           borderWidth: 2, pointRadius: 2.5, pointBackgroundColor:'#F1558E',
+          pointHoverRadius: 6, pointHoverBackgroundColor:'#F1558E',
+          pointHoverBorderColor:'#171A24', pointHoverBorderWidth: 2,
           tension: 0.25, order:1
         }
       ]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
+      animation:{ duration: INTRO_DURATION, ...markIntroDone() },
+      hover:{ animationDuration: 0 },
       interaction:{ mode:'index', intersect:false },
       layout:{ padding:{ top:16 } },
       plugins:{
@@ -1292,9 +1397,10 @@ function renderMonthly(monthKey){
   acumEl.className = 'kpi-value compact saldo ' + (acumM >= 0 ? 'pos' : 'neg');
   document.getElementById('kpiAcumSubM').textContent = activeCategory ? 'desde ' + DATA.period.min + ' (categoria)' : 'desde ' + DATA.period.min;
 
-  renderSpark('sparkCreditM', series.credit, '#A98FE0', 'rgba(169,143,224,0.28)', 'rgba(169,143,224,0)');
-  renderSpark('sparkDebitM', series.debit.map(v => Math.abs(v)), '#FF8529', 'rgba(255,133,41,0.28)', 'rgba(255,133,41,0)');
-  renderSpark('sparkSaldoM', series.credit.map((c,i) => c + series.debit[i]), '#F1558E', 'rgba(241,85,142,0.28)', 'rgba(241,85,142,0)');
+  const dayLabels = series.days.map(dayLabel);
+  renderSpark('sparkCreditM', series.credit, '#A98FE0', 'rgba(169,143,224,0.28)', 'rgba(169,143,224,0)', dayLabels);
+  renderSpark('sparkDebitM', series.debit.map(v => Math.abs(v)), '#FF8529', 'rgba(255,133,41,0.28)', 'rgba(255,133,41,0)', dayLabels);
+  renderSpark('sparkSaldoM', series.credit.map((c,i) => c + series.debit[i]), '#F1558E', 'rgba(241,85,142,0.28)', 'rgba(241,85,142,0)', dayLabels);
 
   const allM = allMonthsSorted();
   const idxM = allM.indexOf(monthKey);
@@ -1304,7 +1410,7 @@ function renderMonthly(monthKey){
     if (activeCategory) { const v = monthValues(m); runningAcum = round2(runningAcum + v.credit + v.debit); return runningAcum; }
     return DATA.monthly[m].cum;
   });
-  renderSpark('sparkAcumM', windowAcum, '#F1558E', 'rgba(241,85,142,0.28)', 'rgba(241,85,142,0)');
+  renderSpark('sparkAcumM', windowAcum, '#F1558E', 'rgba(241,85,142,0.28)', 'rgba(241,85,142,0)', windowMonths.map(monthShortLabel));
 
   const emptyFilteredM = isFiltered() && series.credit.every(v => v === 0) && series.debit.every(v => v === 0);
   document.getElementById('emptyFilterNoticeMonthly').style.display = emptyFilteredM ? 'block' : 'none';
