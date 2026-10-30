@@ -239,6 +239,55 @@
   }
   .filter-chip button:hover{ color:var(--neg); }
 
+  /* ---------- Filtro de centro de custo ---------- */
+  .cc-filter{ position:relative; }
+  .cc-filter-btn{
+    background:var(--panel); border:1px solid var(--border); color:var(--text);
+    font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13.5px;
+    padding:9px 14px; border-radius:10px; cursor:pointer;
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .cc-filter-btn:hover{ background:var(--panel-2); }
+  .cc-filter-btn[aria-expanded="true"]{ background:var(--panel-2); box-shadow: inset 0 0 0 1px var(--credit); }
+  .cc-filter-panel{
+    display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:50;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:12px; width:260px; box-shadow:0 10px 30px rgba(0,0,0,0.35);
+  }
+  .cc-filter-panel.open{ display:block; }
+  .cc-filter-search{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    font-family:'Inter',sans-serif; font-size:12.5px; padding:7px 10px; border-radius:8px;
+    margin-bottom:8px;
+  }
+  .cc-filter-actions{ display:flex; gap:8px; margin-bottom:8px; }
+  .cc-filter-actions button{
+    flex:1; background:transparent; border:1px solid var(--border); color:var(--text-dim);
+    font-family:'Inter',sans-serif; font-size:11.5px; font-weight:600; padding:5px 8px;
+    border-radius:7px; cursor:pointer;
+  }
+  .cc-filter-actions button:hover{ color:var(--text); background:var(--panel-2); }
+  .cc-filter-list{ max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
+  .cc-filter-item{
+    display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text);
+    padding:6px 6px; border-radius:6px; cursor:pointer;
+  }
+  .cc-filter-item:hover{ background:var(--panel-2); }
+  .cc-filter-item input{ cursor:pointer; }
+  .cc-filter-item.cc-hidden{ display:none; }
+  .cc-filter-empty{ font-size:12px; color:var(--text-faint); padding:8px 4px; text-align:center; }
+
+  /* ---------- Variação vs. mês anterior ---------- */
+  .kpi-var-pos{ color:var(--pos); font-weight:600; }
+  .kpi-var-neg{ color:var(--neg); font-weight:600; }
+  .kpi-var-note{ color:var(--text-faint); font-weight:400; }
+
+  /* ---------- Aviso de filtro sem lançamentos ---------- */
+  .empty-filter-notice{
+    display:none; background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:28px 24px; text-align:center; color:var(--text-dim); font-size:13.5px; margin-bottom:20px;
+  }
+
   footer{
     margin-top:6px; text-align:right; font-size:11.5px; color:var(--text-faint);
   }
@@ -250,6 +299,7 @@
     body{ padding:24px 18px 40px; }
     header{ flex-direction:column; }
     .header-controls{ align-items:flex-start; width:100%; }
+    .cc-filter-panel{ right:auto; left:0; width:min(260px, 100%); }
   }
 </style>
 </head>
@@ -289,11 +339,29 @@
       <div class="nav-tabs" id="navTabs"></div>
       <div class="year-toggle" id="yearToggle"></div>
       <select class="month-select" id="monthSelect" style="display:none;"></select>
+      <div class="cc-filter" id="ccFilter" style="display:none;">
+        <button class="cc-filter-btn" id="ccFilterBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Filtrar por centro de custo">
+          <span id="ccFilterBtnLabel">Centro de custo: Todos</span>
+        </button>
+        <div class="cc-filter-panel" id="ccFilterPanel" role="dialog" aria-label="Filtro de centro de custo">
+          <input class="cc-filter-search" id="ccFilterSearch" type="text" placeholder="Buscar centro de custo…" aria-label="Buscar centro de custo">
+          <div class="cc-filter-actions">
+            <button id="ccFilterAll" type="button">Selecionar todos</button>
+            <button id="ccFilterNone" type="button">Limpar</button>
+          </div>
+          <div class="cc-filter-list" id="ccFilterList"></div>
+        </div>
+      </div>
+      <div class="filter-chip" id="ccChip">
+        <span id="ccChipLabel"></span>
+        <button id="ccChipClear" title="Limpar filtro de centro de custo">✕</button>
+      </div>
       <div class="filter-chip" id="filterChip">
         <span id="filterChipLabel"></span>
         <button id="filterChipClear" title="Limpar filtro">✕</button>
       </div>
       <div class="period-note" id="periodNote"></div>
+      <div class="period-note" id="updatedNote"></div>
       <div class="user-bar"><span id="userEmail"></span><button id="logoutBtn" type="button">Sair</button></div>
     </div>
   </header>
@@ -327,6 +395,8 @@
       </div>
     </section>
 
+    <div class="empty-filter-notice" id="emptyFilterNoticeAnnual">Nenhum lançamento encontrado para os filtros selecionados neste ano.</div>
+    <div id="annualCharts">
     <section class="panel">
       <div class="panel-title">Fluxo mensal</div>
       <div class="panel-desc">Entradas e saídas por mês, com a evolução do saldo acumulado</div>
@@ -359,6 +429,7 @@
         <div class="bar-canvas-holder"><canvas id="debitBarChart"></canvas></div>
       </div>
     </section>
+    </div>
   </div>
 
   <!-- ======================= PÁGINA 2 — RELATÓRIO MENSAL ======================= -->
@@ -368,6 +439,7 @@
         <div class="kpi-head">
           <div class="kpi-label" id="kpiCreditLabelM">Créditos do mês</div>
           <div class="kpi-value credit compact" id="kpiCreditM">—</div>
+          <div class="kpi-sub" id="kpiCreditVarM"></div>
         </div>
         <div class="kpi-chart"><canvas id="sparkCreditM"></canvas></div>
       </div>
@@ -375,6 +447,7 @@
         <div class="kpi-head">
           <div class="kpi-label" id="kpiDebitLabelM">Débitos do mês</div>
           <div class="kpi-value debit compact" id="kpiDebitM">—</div>
+          <div class="kpi-sub" id="kpiDebitVarM"></div>
         </div>
         <div class="kpi-chart"><canvas id="sparkDebitM"></canvas></div>
       </div>
@@ -382,6 +455,7 @@
         <div class="kpi-head">
           <div class="kpi-label" id="kpiSaldoLabelM">Saldo do mês</div>
           <div class="kpi-value saldo compact" id="kpiSaldoM">—</div>
+          <div class="kpi-sub" id="kpiSaldoVarM"></div>
         </div>
         <div class="kpi-chart"><canvas id="sparkSaldoM"></canvas></div>
       </div>
@@ -395,6 +469,8 @@
       </div>
     </section>
 
+    <div class="empty-filter-notice" id="emptyFilterNoticeMonthly">Nenhum lançamento encontrado para os filtros selecionados neste mês.</div>
+    <div id="monthlyCharts">
     <section class="panel">
       <div class="panel-title">Fluxo diário</div>
       <div class="panel-desc" id="dailyDesc">Entradas, saídas e saldo acumulado, dia a dia</div>
@@ -418,6 +494,7 @@
         <div class="bar-canvas-holder"><canvas id="debitBarChartM"></canvas></div>
       </div>
     </section>
+    </div>
   </div>
 
   <footer id="footerNote"></footer>
@@ -456,6 +533,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
 });
 
+let BASE_DATA = null;
 let DATA = null;
 let DATA_UPDATED_AT = null;
 
@@ -480,7 +558,8 @@ async function loadDataOrDeny(session){
     showLockError('A conta ' + email + ' não tem acesso a este dashboard.');
     return;
   }
-  DATA = data.dados;
+  BASE_DATA = data.dados;
+  DATA = BASE_DATA;
   DATA_UPDATED_AT = data.atualizado_em;
   document.getElementById('userEmail').textContent = email;
   unlockApp();
@@ -550,6 +629,7 @@ function dailyKeysOfMonth(monthKey){ return Object.keys(DATA.daily).filter(k => 
 
 let charts = {};
 let activeCategory = null;
+let activeCostCenters = new Set();
 let currentPage = 'annual';
 let currentYear = null;
 let currentMonthKey = null;
@@ -723,6 +803,170 @@ function clearCategoryFilter(){
 
 document.getElementById('filterChipClear').addEventListener('click', clearCategoryFilter);
 
+/* ============================= FILTRO DE CENTRO DE CUSTO ============================= */
+
+function isFiltered(){
+  return !!activeCategory || activeCostCenters.size > 0;
+}
+
+function buildCostCenterFilteredData(ccSet){
+  const monthly = {};
+  Object.keys(BASE_DATA.monthly).forEach(m => { monthly[m] = { credit: 0, debit: 0, net: 0, cum: 0 }; });
+  const daily = {};
+  Object.keys(BASE_DATA.daily).forEach(d => { daily[d] = { credit: 0, debit: 0, net: 0 }; });
+  const category_by_year = {}, category_by_month = {}, category_by_day = {};
+  function addCat(bucket, key, cat, credit, debit){
+    if (!bucket[key]) bucket[key] = {};
+    if (!bucket[key][cat]) bucket[key][cat] = { credit: 0, debit: 0 };
+    bucket[key][cat].credit += credit;
+    bucket[key][cat].debit += debit;
+  }
+  (BASE_DATA.rows || []).forEach(row => {
+    const [date, cc, cat, credit, debit] = row;
+    if (!ccSet.has(cc)) return;
+    const month = date.slice(0, 7);
+    const year = date.slice(0, 4);
+    if (monthly[month]) { monthly[month].credit += credit; monthly[month].debit += debit; }
+    if (daily[date]) { daily[date].credit += credit; daily[date].debit += debit; }
+    addCat(category_by_year, year, cat, credit, debit);
+    addCat(category_by_month, month, cat, credit, debit);
+    addCat(category_by_day, date, cat, credit, debit);
+  });
+  const month_start_cum = {};
+  let running = 0;
+  Object.keys(monthly).sort().forEach(m => {
+    monthly[m].credit = round2(monthly[m].credit);
+    monthly[m].debit = round2(monthly[m].debit);
+    monthly[m].net = round2(monthly[m].credit + monthly[m].debit);
+    month_start_cum[m] = round2(running);
+    running = round2(running + monthly[m].net);
+    monthly[m].cum = running;
+  });
+  Object.keys(daily).forEach(d => {
+    daily[d].credit = round2(daily[d].credit);
+    daily[d].debit = round2(daily[d].debit);
+    daily[d].net = round2(daily[d].credit + daily[d].debit);
+  });
+  [category_by_year, category_by_month, category_by_day].forEach(bucket => {
+    Object.keys(bucket).forEach(key => {
+      Object.keys(bucket[key]).forEach(cat => {
+        bucket[key][cat].credit = round2(bucket[key][cat].credit);
+        bucket[key][cat].debit = round2(bucket[key][cat].debit);
+      });
+    });
+  });
+  return {
+    years: BASE_DATA.years,
+    period: BASE_DATA.period,
+    monthly, month_start_cum, daily,
+    category_by_year, category_by_month, category_by_day
+  };
+}
+
+function applyCostCenterFilter(){
+  DATA = activeCostCenters.size ? buildCostCenterFilteredData(activeCostCenters) : BASE_DATA;
+}
+
+function costCenterSummaryLabel(){
+  if (activeCostCenters.size === 0) return 'Centro de custo: Todos';
+  if (activeCostCenters.size === 1) return 'Centro: ' + [...activeCostCenters][0];
+  return activeCostCenters.size + ' selecionados';
+}
+
+function refreshCostCenterChip(){
+  document.getElementById('ccFilterBtnLabel').textContent = costCenterSummaryLabel();
+  const chip = document.getElementById('ccChip');
+  if (activeCostCenters.size === 1) {
+    chip.style.display = 'inline-flex';
+    document.getElementById('ccChipLabel').textContent = 'Centro: ' + [...activeCostCenters][0];
+  } else if (activeCostCenters.size > 1) {
+    chip.style.display = 'inline-flex';
+    document.getElementById('ccChipLabel').textContent = activeCostCenters.size + ' centros de custo';
+  } else {
+    chip.style.display = 'none';
+  }
+}
+
+function onCostCenterSelectionChanged(){
+  applyCostCenterFilter();
+  refreshCostCenterChip();
+  rerenderCurrentPage();
+}
+
+function setupCostCenterFilter(){
+  const wrap = document.getElementById('ccFilter');
+  if (!Array.isArray(BASE_DATA.cost_centers) || !BASE_DATA.cost_centers.length || !Array.isArray(BASE_DATA.rows)) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = '';
+
+  const btn = document.getElementById('ccFilterBtn');
+  const panel = document.getElementById('ccFilterPanel');
+  const list = document.getElementById('ccFilterList');
+  const search = document.getElementById('ccFilterSearch');
+
+  list.innerHTML = '';
+  BASE_DATA.cost_centers.forEach(cc => {
+    const item = document.createElement('label');
+    item.className = 'cc-filter-item';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) activeCostCenters.add(cc); else activeCostCenters.delete(cc);
+      onCostCenterSelectionChanged();
+    });
+    const span = document.createElement('span');
+    span.textContent = cc;
+    item.appendChild(checkbox);
+    item.appendChild(span);
+    item.dataset.name = cc.toLowerCase();
+    list.appendChild(item);
+  });
+
+  function openPanel(){
+    panel.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+  function closePanel(){
+    panel.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+
+  btn.addEventListener('click', () => {
+    if (panel.classList.contains('open')) closePanel(); else openPanel();
+  });
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) closePanel();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePanel();
+  });
+
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    [...list.children].forEach(item => {
+      item.classList.toggle('cc-hidden', q.length > 0 && !item.dataset.name.includes(q));
+    });
+  });
+
+  document.getElementById('ccFilterAll').addEventListener('click', () => {
+    BASE_DATA.cost_centers.forEach(cc => activeCostCenters.add(cc));
+    [...list.children].forEach(item => { item.querySelector('input').checked = true; });
+    onCostCenterSelectionChanged();
+  });
+  document.getElementById('ccFilterNone').addEventListener('click', () => {
+    activeCostCenters.clear();
+    [...list.children].forEach(item => { item.querySelector('input').checked = false; });
+    onCostCenterSelectionChanged();
+  });
+  document.getElementById('ccChipClear').addEventListener('click', () => {
+    activeCostCenters.clear();
+    [...list.children].forEach(item => { item.querySelector('input').checked = false; });
+    onCostCenterSelectionChanged();
+  });
+}
+
 function dimColor(baseColor){
   return baseColor.replace(/[\d.]+\)$/, '0.18)');
 }
@@ -751,7 +995,7 @@ function renderCombo(year){
           showLabels:true, labelColor:'#FFC599', labelFmt: fmtCompact
         },
         {
-          type:'line', label: activeCategory ? 'Total acumulado' : 'Saldo acumulado', data: series.cum,
+          type:'line', label: isFiltered() ? 'Total acumulado' : 'Saldo acumulado', data: series.cum,
           borderColor: '#F1558E', backgroundColor:'#F1558E',
           borderWidth: 2.5, pointRadius: 3, pointBackgroundColor:'#F1558E',
           tension: 0.3, order:1, yAxisID:'y',
@@ -781,7 +1025,7 @@ function renderCombo(year){
     }
   });
 
-  document.getElementById('comboSaldoLegendLabel').textContent = activeCategory ? 'Total acumulado' : 'Saldo acumulado';
+  document.getElementById('comboSaldoLegendLabel').textContent = isFiltered() ? 'Total acumulado' : 'Saldo acumulado';
 }
 
 function renderMonthTable(year){
@@ -806,7 +1050,7 @@ function renderMonthTable(year){
     `<td class="credit-cell">${fmtBRL2(totalCredit)}</td>` +
     `<td class="debit-cell">${fmtBRL2(totalDebit)}</td>` +
     `<td class="${lastCum >= 0 ? 'pos' : 'neg'}">${fmtBRL2(lastCum)}</td>`;
-  document.getElementById('monthTableSaldoHead').textContent = activeCategory ? 'Total' : 'Saldo';
+  document.getElementById('monthTableSaldoHead').textContent = isFiltered() ? 'Total' : 'Saldo';
 }
 
 function renderCategoryBars(canvasId, entries, color, labelColor){
@@ -881,7 +1125,7 @@ function renderAnnual(year){
 
   document.getElementById('kpiCreditLabel').textContent = activeCategory ? 'Créditos — ' + activeCategory : 'Créditos';
   document.getElementById('kpiDebitLabel').textContent = activeCategory ? 'Débitos — ' + activeCategory : 'Débitos';
-  document.getElementById('kpiSaldoLabel').textContent = activeCategory ? 'Total acumulado' : 'Saldo acumulado';
+  document.getElementById('kpiSaldoLabel').textContent = isFiltered() ? 'Total acumulado' : 'Saldo acumulado';
 
   document.getElementById('kpiCredit').textContent = fmtBRL(totalCredit);
   document.getElementById('kpiDebit').textContent = fmtBRLsigned(totalDebit);
@@ -906,13 +1150,20 @@ function renderAnnual(year){
   renderSpark('sparkDebit', windowDebit, '#FF8529', 'rgba(255,133,41,0.28)', 'rgba(255,133,41,0)');
   renderSpark('sparkSaldo', windowCum, '#F1558E', 'rgba(241,85,142,0.28)', 'rgba(241,85,142,0)');
 
-  renderCombo(year);
-  renderMonthTable(year);
+  const emptyFiltered = isFiltered() && series.credit.every(v => v === 0) && series.debit.every(v => v === 0);
+  document.getElementById('emptyFilterNoticeAnnual').style.display = emptyFiltered ? 'block' : 'none';
+  document.getElementById('annualCharts').style.display = emptyFiltered ? 'none' : '';
+  if (emptyFiltered) {
+    destroyChart('comboChart'); destroyChart('creditBarChart'); destroyChart('debitBarChart');
+  } else {
+    renderCombo(year);
+    renderMonthTable(year);
 
-  const cats = DATA.category_by_year[String(year)] || {};
-  const {creditEntries, debitEntries} = categoryEntries(cats);
-  renderCategoryBars('creditBarChart', creditEntries, 'rgba(169,143,224,0.85)', '#D1C3EE');
-  renderCategoryBars('debitBarChart', debitEntries, 'rgba(255,133,41,0.85)', '#FFC599');
+    const cats = DATA.category_by_year[String(year)] || {};
+    const {creditEntries, debitEntries} = categoryEntries(cats);
+    renderCategoryBars('creditBarChart', creditEntries, 'rgba(169,143,224,0.85)', '#D1C3EE');
+    renderCategoryBars('debitBarChart', debitEntries, 'rgba(255,133,41,0.85)', '#FFC599');
+  }
 
   document.getElementById('footerNote').textContent =
     'Dados da aba NIBO · ' + series.months.length + ' meses em ' + year + ' · atualizado até ' + DATA.period.max;
@@ -942,7 +1193,7 @@ function renderDailyCombo(monthKey){
           showLabels:true, labelColor:'#FFC599', labelFont:'600 8.5px Inter, sans-serif', labelFmt: fmtCompact
         },
         {
-          type:'line', label: activeCategory ? 'Total acumulado' : 'Saldo acumulado', data: series.cum,
+          type:'line', label: isFiltered() ? 'Total acumulado' : 'Saldo acumulado', data: series.cum,
           borderColor: '#F1558E', backgroundColor:'#F1558E',
           borderWidth: 2, pointRadius: 2.5, pointBackgroundColor:'#F1558E',
           tension: 0.25, order:1
@@ -974,7 +1225,43 @@ function renderDailyCombo(monthKey){
     }
   });
 
-  document.getElementById('dailySaldoLegendLabel').textContent = activeCategory ? 'Total acumulado' : 'Saldo acumulado';
+  document.getElementById('dailySaldoLegendLabel').textContent = isFiltered() ? 'Total acumulado' : 'Saldo acumulado';
+}
+
+function nowMonthKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function renderMonthVariation(elId, cur, prev, prevMonthKey, metric, inProgress){
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  if (prev === null || prev === undefined) return;
+  const curRef = metric === 'debit' ? Math.abs(cur) : cur;
+  const prevRef = metric === 'debit' ? Math.abs(prev) : prev;
+  if (prevRef === 0) return;
+  const diff = curRef - prevRef;
+  const goodDirection = metric !== 'debit';
+  const isUp = diff >= 0;
+  const isGood = isUp === goodDirection;
+  const arrow = isUp ? '▲' : '▼';
+  const colorClass = isGood ? 'kpi-var-pos' : 'kpi-var-neg';
+  const [, pm] = prevMonthKey.split('-');
+  const prevLabel = MONTH_FULL[parseInt(pm, 10) - 1].toLowerCase();
+  const signChanged = metric === 'saldo' && ((prevRef > 0 && curRef < 0) || (prevRef < 0 && curRef > 0));
+  const valueText = signChanged
+    ? fmtBRL(Math.abs(diff)) + ' vs. ' + prevLabel
+    : Math.abs(diff / prevRef * 100).toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + '% vs. ' + prevLabel;
+  const span = document.createElement('span');
+  span.className = colorClass;
+  span.textContent = arrow + ' ' + valueText;
+  el.appendChild(span);
+  if (inProgress) {
+    const note = document.createElement('span');
+    note.className = 'kpi-var-note';
+    note.textContent = ' · mês em andamento';
+    el.appendChild(note);
+  }
 }
 
 function renderMonthly(monthKey){
@@ -990,8 +1277,8 @@ function renderMonthly(monthKey){
 
   document.getElementById('kpiCreditLabelM').textContent = activeCategory ? 'Créditos — ' + activeCategory : 'Créditos do mês';
   document.getElementById('kpiDebitLabelM').textContent = activeCategory ? 'Débitos — ' + activeCategory : 'Débitos do mês';
-  document.getElementById('kpiSaldoLabelM').textContent = activeCategory ? 'Total do mês' : 'Saldo do mês';
-  document.getElementById('kpiAcumLabelM').textContent = activeCategory ? 'Total acumulado' : 'Saldo acumulado';
+  document.getElementById('kpiSaldoLabelM').textContent = isFiltered() ? 'Total do mês' : 'Saldo do mês';
+  document.getElementById('kpiAcumLabelM').textContent = isFiltered() ? 'Total acumulado' : 'Saldo acumulado';
 
   document.getElementById('kpiCreditM').textContent = fmtBRL(totalCreditM);
   document.getElementById('kpiDebitM').textContent = fmtBRLsigned(totalDebitM);
@@ -1019,14 +1306,35 @@ function renderMonthly(monthKey){
   });
   renderSpark('sparkAcumM', windowAcum, '#F1558E', 'rgba(241,85,142,0.28)', 'rgba(241,85,142,0)');
 
-  renderDailyCombo(monthKey);
-  document.getElementById('dailyDesc').textContent =
-    'Entradas, saídas e saldo acumulado, dia a dia — ' + MONTH_FULL[monthIdx] + '/' + y;
+  const emptyFilteredM = isFiltered() && series.credit.every(v => v === 0) && series.debit.every(v => v === 0);
+  document.getElementById('emptyFilterNoticeMonthly').style.display = emptyFilteredM ? 'block' : 'none';
+  document.getElementById('monthlyCharts').style.display = emptyFilteredM ? 'none' : '';
+  if (emptyFilteredM) {
+    destroyChart('dailyChart'); destroyChart('creditBarChartM'); destroyChart('debitBarChartM');
+  } else {
+    renderDailyCombo(monthKey);
+    document.getElementById('dailyDesc').textContent =
+      'Entradas, saídas e saldo acumulado, dia a dia — ' + MONTH_FULL[monthIdx] + '/' + y;
 
-  const cats = DATA.category_by_month[monthKey] || {};
-  const {creditEntries, debitEntries} = categoryEntries(cats);
-  renderCategoryBars('creditBarChartM', creditEntries, 'rgba(169,143,224,0.85)', '#D1C3EE');
-  renderCategoryBars('debitBarChartM', debitEntries, 'rgba(255,133,41,0.85)', '#FFC599');
+    const cats = DATA.category_by_month[monthKey] || {};
+    const {creditEntries, debitEntries} = categoryEntries(cats);
+    renderCategoryBars('creditBarChartM', creditEntries, 'rgba(169,143,224,0.85)', '#D1C3EE');
+    renderCategoryBars('debitBarChartM', debitEntries, 'rgba(255,133,41,0.85)', '#FFC599');
+  }
+
+  const allMonthsForVar = allMonthsSorted();
+  const curIdx = allMonthsForVar.indexOf(monthKey);
+  const prevMonthKey = curIdx > 0 ? allMonthsForVar[curIdx - 1] : null;
+  const inProgress = monthKey === nowMonthKey();
+  if (prevMonthKey) {
+    const prevVals = monthValues(prevMonthKey);
+    const prevNet = prevVals.credit + prevVals.debit;
+    renderMonthVariation('kpiCreditVarM', totalCreditM, prevVals.credit, prevMonthKey, 'credit', inProgress);
+    renderMonthVariation('kpiDebitVarM', totalDebitM, prevVals.debit, prevMonthKey, 'debit', inProgress);
+    renderMonthVariation('kpiSaldoVarM', netM, prevNet, prevMonthKey, 'saldo', inProgress);
+  } else {
+    ['kpiCreditVarM', 'kpiDebitVarM', 'kpiSaldoVarM'].forEach(id => { document.getElementById(id).innerHTML = ''; });
+  }
 
   document.getElementById('footerNote').textContent =
     'Dados da aba NIBO · ' + series.days.length + ' dias com movimentação em ' + MONTH_FULL[monthIdx] + '/' + y;
@@ -1093,8 +1401,23 @@ function showPage(id){
   }
 }
 
+function formatUpdatedAt(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const parts = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(d).reduce((acc, p) => { acc[p.type] = p.value; return acc; }, {});
+  return 'Dados atualizados em ' + parts.day + '/' + parts.month + '/' + parts.year +
+    ' às ' + parts.hour + ':' + parts.minute;
+}
+
 function boot(){
   document.getElementById('periodNote').textContent = 'Período disponível: ' + DATA.period.min + ' – ' + DATA.period.max;
+  document.getElementById('updatedNote').textContent = formatUpdatedAt(DATA_UPDATED_AT);
+  setupCostCenterFilter();
   setupNavTabs();
   setupYearToggle();
   setupMonthSelect();
