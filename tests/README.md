@@ -34,12 +34,21 @@ Este app (`financeiro-um`) só verifica `sb.auth.getSession()` uma vez, em `init
 | `specs/screenshots.spec.js` | Gera os screenshots em `screenshots/` (desktop 1440px e mobile 390px, anual e mensal, com e sem filtro) |
 | `specs/header-responsive.spec.js` | Cabeçalho (Tarefa A): nenhuma rolagem horizontal causada por ele em 1440/1024/768/390/320/1920px, com e sem filtro, nas duas páginas; e-mail truncado com `title` no celular; ordem da coluna única em ≤640px |
 | `specs/chart-tooltips.spec.js` | Tooltip/bolinha nas miniaturas (mês ou dia certo, valor em R$, raio 0 em repouso), crosshair + bolinha destacada nos gráficos grandes (só depois da animação de entrada, some ao tirar o mouse), toque (mobile, `hasTouch`) nas miniaturas e nos gráficos, e ausência de erros de console durante os hovers |
+| `specs/export-pdf.spec.js` | Exportar PDF: diálogo (período padrão, Esc, centro de custo herdado do filtro ativo, período sem dados), KPIs/tabelas batendo com a soma direta de `rows` para Mês/Trimestre/Ano/Personalizado, centro de custo filtrado (omite a tabela "por centro de custo"), geração real via `page.pdf()` com 2 páginas A4 sem conteúdo cortado, e ausência de erros de console |
 
 ## Cabeçalho e tooltips (Tarefa A/B)
 
 `header-responsive.spec.js` testa a garantia de "sem rolagem horizontal" checando que `header.getBoundingClientRect().right` (e o mesmo para a linha de chips) nunca ultrapassa a largura da viewport — e não o `scrollWidth` do documento inteiro. Isso é proposital: a tabela do "Fluxo mensal" já tinha, antes desta mudança e sem relação com o cabeçalho, uma rolagem própria em telas muito estreitas (abaixo de ~360px) por causa de `white-space:nowrap` nas células — ver "riscos conhecidos" no PR.
 
 `chart-tooltips.spec.js` lê o estado interno do Chart.js (`charts[canvasId].tooltip`, `.getActiveElements()`, `.$introDone`) via `page.evaluate()`, já que o tooltip e a linha-guia (crosshair) são desenhados no `<canvas>`, não no DOM — não dá para usar `expect(locator).toHaveText(...)` neles.
+
+## Exportar PDF (relatório por período)
+
+`export-pdf.spec.js` trava o relógio da página com `page.clock.install()` (mesmo motivo do `month-variation.spec.js`: o período padrão é "o último trimestre completo", calculado a partir de `new Date()`, então sem travar o relógio o teste vira uma bomba-relógio) e usa uma fixture com datas fixas (não "até hoje").
+
+Como o relatório (`#reportRoot`) só fica visível em `@media print`, os testes de layout chamam `page.emulateMedia({ media: 'print' })` antes de inspecionar `.report-page` — sem isso, `scrollHeight`/`offsetHeight` vêm zerados (elemento `display:none` não tem layout calculado). A verificação de "sem conteúdo cortado" mede a altura renderizada de cada `.report-page` e garante que não passa de ~297mm (A4) a 96dpi — page 1 (KPIs + gráfico + tabela-resumo) é o caso mais apertado para Ano (12 meses na tabela).
+
+Os PDFs/screenshots gerados por esses testes (`export-pdf-<período>-desktop.{pdf,png}`) rodam só no projeto `desktop` (o relatório é A4 fixo, independente do viewport do navegador — gerar de novo no projeto `mobile` só duplicaria os mesmos arquivos).
 
 ## Dados fictícios
 
