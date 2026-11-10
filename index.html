@@ -320,7 +320,148 @@
     .header-chips-row{ justify-content:flex-start; }
     .user-bar span{ max-width:52vw; }
     .cc-filter-panel{ right:auto; left:0; width:min(260px, 100%); }
+    .export-pdf-label{ display:none; }
+    .export-pdf-btn{ padding:9px 11px; }
   }
+
+  /* ---------- Botão e diálogo "Exportar PDF" ---------- */
+  .export-pdf-btn{
+    background:var(--panel); border:1px solid var(--border); color:var(--text);
+    font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13.5px;
+    padding:9px 14px; border-radius:10px; cursor:pointer;
+    display:flex; align-items:center; gap:7px; white-space:nowrap;
+  }
+  .export-pdf-btn:hover{ background:var(--panel-2); }
+  .export-pdf-icon{ font-size:14px; line-height:1; }
+
+  dialog.export-pdf-dialog{
+    background:var(--panel); color:var(--text); border:1px solid var(--border);
+    border-radius:16px; padding:22px 24px; width:min(420px, 92vw);
+    font-family:'Inter',sans-serif;
+  }
+  dialog.export-pdf-dialog::backdrop{ background:rgba(8,9,14,0.65); }
+  .export-pdf-title{
+    font-family:'Barlow Condensed',sans-serif; font-size:19px; font-weight:600;
+    margin:0 0 16px;
+  }
+  .export-pdf-field{ margin-bottom:14px; }
+  .export-pdf-field label, .export-pdf-field-label{
+    display:block; font-size:12px; color:var(--text-dim); font-weight:600; margin-bottom:6px;
+  }
+  .export-pdf-row{ display:flex; gap:10px; }
+  .export-pdf-row > *{ flex:1; min-width:0; }
+  .export-pdf-field select, .export-pdf-field input[type=date]{
+    width:100%; background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    font-family:'Inter',sans-serif; font-size:13.5px; padding:8px 10px; border-radius:8px;
+    cursor:pointer;
+  }
+  .export-pdf-period-types{ display:flex; gap:6px; flex-wrap:wrap; }
+  .export-period-type-btn{
+    flex:1; background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim);
+    font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:13px;
+    padding:8px 10px; border-radius:8px; cursor:pointer; white-space:nowrap;
+  }
+  .export-period-type-btn.active{ background:var(--credit-dim); border-color:var(--credit); color:#fff; }
+  .export-pdf-empty{
+    background:rgba(255,107,107,0.12); border:1px solid var(--neg); color:#FFB3B3;
+    font-size:12.5px; padding:10px 12px; border-radius:8px; margin-bottom:14px;
+  }
+  .export-pdf-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+  .export-pdf-actions button{
+    font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:14px;
+    padding:9px 18px; border-radius:8px; cursor:pointer; border:1px solid var(--border);
+  }
+  #exportPdfCancel{ background:transparent; color:var(--text-dim); }
+  #exportPdfCancel:hover{ color:var(--text); background:var(--panel-2); }
+  .export-pdf-generate{ background:var(--credit); border-color:var(--credit); color:#13101c; }
+  .export-pdf-generate:hover{ background:#B6A0EE; }
+  @media (max-width: 480px){
+    dialog.export-pdf-dialog{ padding:18px; }
+    .export-pdf-row{ flex-direction:column; }
+  }
+
+  /* ---------- Relatório em PDF (#reportRoot) ---------- */
+  /* Tema claro próprio, independente do tema escuro do dashboard — só
+     existe para a impressão, por isso fica fora de :root e nunca é
+     aplicado na tela normal (#reportRoot é display:none fora de @media print). */
+  #reportRoot{
+    display:none;
+    --rp-credit:#7B5BC8; --rp-debit:#E8731A; --rp-saldo:#D6336C;
+    --rp-pos:#1C8A4B; --rp-neg:#C92A2A;
+    --rp-text:#1A1A2E; --rp-text-dim:#5B5B6B; --rp-text-faint:#8A8A9A;
+    --rp-border:#E4E4EC; --rp-panel:#FAFAFD;
+    font-family:'Inter',-apple-system,sans-serif;
+    color:var(--rp-text);
+    background:#fff;
+  }
+  @media print{
+    @page{ size:A4; margin:0; }
+    html, body{ background:#fff; }
+    body > *:not(#reportRoot){ display:none !important; }
+    #reportRoot{ display:block; }
+    .report-page{ page-break-after:always; }
+    .report-page:last-child{ page-break-after:auto; }
+  }
+  #reportRoot, #reportRoot *{ print-color-adjust:exact; -webkit-print-color-adjust:exact; box-sizing:border-box; }
+  .report-page{
+    width:210mm; min-height:297mm; background:#fff; position:relative;
+    padding:15mm 14mm 11mm;
+  }
+  .report-page::before{
+    content:''; position:absolute; top:0; left:0; right:0; height:4mm;
+    background:linear-gradient(90deg, var(--rp-credit), var(--rp-saldo), var(--rp-debit));
+  }
+  .report-header{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    border-bottom:1.5px solid var(--rp-border); padding-bottom:3mm; margin-bottom:5mm; gap:6mm;
+  }
+  .report-header-brand{ display:flex; align-items:center; gap:3mm; }
+  .report-header-brand img{ height:11mm; width:auto; }
+  .report-title{ font-family:'Barlow Condensed',sans-serif; font-size:17pt; font-weight:700; margin:0; }
+  .report-subtitle{ font-size:9.5pt; color:var(--rp-text-dim); margin-top:0.8mm; }
+  .report-meta{ text-align:right; font-size:8.5pt; color:var(--rp-text-faint); line-height:1.5; }
+  .report-meta strong{ color:var(--rp-text); font-size:9.5pt; }
+  .report-kpis{ display:grid; grid-template-columns:repeat(4, 1fr); gap:4mm; margin-bottom:5mm; }
+  .report-kpi{
+    border:1px solid var(--rp-border); border-top:1mm solid var(--rp-kpi-color, var(--rp-text-dim));
+    border-radius:2mm; padding:2.6mm 3.5mm; min-height:23mm;
+  }
+  .report-kpi-label{ font-size:7.5pt; font-weight:700; letter-spacing:0.03em; text-transform:uppercase; color:var(--rp-text-dim); }
+  .report-kpi-value{ font-family:'Barlow Condensed',sans-serif; font-size:14pt; font-weight:700; margin-top:1.2mm; }
+  .report-kpi-var{ font-size:7.6pt; margin-top:1.1mm; font-weight:600; line-height:1.35; }
+  .report-kpi-var.pos{ color:var(--rp-pos); }
+  .report-kpi-var.neg{ color:var(--rp-neg); }
+  .report-kpi-sub{ font-size:7.6pt; color:var(--rp-text-faint); margin-top:1.1mm; }
+  .report-panel{ border:1px solid var(--rp-border); border-radius:2mm; padding:3.5mm 4.5mm; margin-bottom:5mm; }
+  .report-panel-title{ font-family:'Barlow Condensed',sans-serif; font-size:12pt; font-weight:700; margin:0 0 0.8mm; }
+  .report-panel-desc{ font-size:8pt; color:var(--rp-text-faint); margin-bottom:2.2mm; }
+  .report-legend{ display:flex; gap:5mm; margin-bottom:1.5mm; font-size:8pt; color:var(--rp-text-dim); }
+  .report-legend span{ display:inline-flex; align-items:center; gap:1.5mm; }
+  .report-legend i{ width:2.6mm; height:2.6mm; border-radius:0.6mm; display:inline-block; }
+  table.report-table{ width:100%; border-collapse:collapse; font-size:8.6pt; }
+  table.report-table th{
+    text-align:right; font-size:7.3pt; font-weight:700; text-transform:uppercase; letter-spacing:0.03em;
+    color:var(--rp-text-faint); border-bottom:1px solid var(--rp-border); padding:1.1mm 1.8mm;
+  }
+  table.report-table th:first-child, table.report-table td:first-child{ text-align:left; }
+  table.report-table td{ padding:1.2mm 1.8mm; border-bottom:0.5px solid var(--rp-border); white-space:nowrap; }
+  table.report-table tfoot td{ font-weight:700; border-top:1.2px solid var(--rp-text); border-bottom:none; padding-top:2.4mm; }
+  table.report-table td.rp-credit{ color:var(--rp-credit); }
+  table.report-table td.rp-debit{ color:var(--rp-debit); }
+  table.report-table td.rp-pos{ color:var(--rp-pos); }
+  table.report-table td.rp-neg{ color:var(--rp-neg); }
+  table.report-table td.rp-cat-name{ max-width:42mm; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rp-bar-track{ width:100%; height:1.3mm; background:#EEEEF3; border-radius:1mm; margin-top:1mm; overflow:hidden; }
+  .rp-bar-fill{ height:100%; border-radius:1mm; }
+  .rp-bar-fill.rp-credit-fill{ background:var(--rp-credit); }
+  .rp-bar-fill.rp-debit-fill{ background:var(--rp-debit); }
+  .report-footnote{ font-size:7.3pt; color:var(--rp-text-faint); line-height:1.5; margin-top:2mm; }
+  .report-page-footer{
+    position:absolute; left:14mm; right:14mm; bottom:8mm;
+    display:flex; justify-content:space-between; font-size:7.3pt; color:var(--rp-text-faint);
+    border-top:0.5px solid var(--rp-border); padding-top:2mm;
+  }
+  .report-page-footer a{ color:inherit; }
 </style>
 </head>
 <body>
@@ -380,6 +521,10 @@
           <div class="cc-filter-list" id="ccFilterList"></div>
         </div>
       </div>
+      <button class="export-pdf-btn" id="exportPdfBtn" type="button" aria-haspopup="dialog" aria-label="Exportar PDF" style="display:none;">
+        <span class="export-pdf-icon" aria-hidden="true">⤓</span>
+        <span class="export-pdf-label">Exportar PDF</span>
+      </button>
       </div>
     </div>
   </header>
@@ -393,6 +538,63 @@
       <button id="filterChipClear" title="Limpar filtro">✕</button>
     </div>
   </div>
+
+  <dialog id="exportPdfDialog" class="export-pdf-dialog" aria-label="Exportar relatório em PDF">
+    <h2 class="export-pdf-title">Exportar relatório em PDF</h2>
+
+    <div class="export-pdf-field">
+      <span class="export-pdf-field-label">Período</span>
+      <div class="export-pdf-period-types" id="exportPeriodTypes" role="radiogroup" aria-label="Tipo de período">
+        <button type="button" class="export-period-type-btn" data-type="month" role="radio">Mês</button>
+        <button type="button" class="export-period-type-btn" data-type="quarter" role="radio">Trimestre</button>
+        <button type="button" class="export-period-type-btn" data-type="year" role="radio">Ano</button>
+        <button type="button" class="export-period-type-btn" data-type="custom" role="radio">Personalizado</button>
+      </div>
+    </div>
+
+    <div class="export-pdf-field" id="exportMonthFields">
+      <label for="exportMonthSelect">Mês</label>
+      <select id="exportMonthSelect"></select>
+    </div>
+
+    <div class="export-pdf-field" id="exportQuarterFields">
+      <label for="exportQuarterSelect">Trimestre</label>
+      <div class="export-pdf-row">
+        <select id="exportQuarterSelect" aria-label="Trimestre"></select>
+        <select id="exportQuarterYearSelect" aria-label="Ano do trimestre"></select>
+      </div>
+    </div>
+
+    <div class="export-pdf-field" id="exportYearFields">
+      <label for="exportYearSelect">Ano</label>
+      <select id="exportYearSelect"></select>
+    </div>
+
+    <div class="export-pdf-field" id="exportCustomFields">
+      <div class="export-pdf-row">
+        <div>
+          <label for="exportCustomStart">De</label>
+          <input type="date" id="exportCustomStart">
+        </div>
+        <div>
+          <label for="exportCustomEnd">Até</label>
+          <input type="date" id="exportCustomEnd">
+        </div>
+      </div>
+    </div>
+
+    <div class="export-pdf-field" id="exportCcField">
+      <label for="exportCcSelect">Centro de custo</label>
+      <select id="exportCcSelect"></select>
+    </div>
+
+    <div class="export-pdf-empty" id="exportPdfEmptyMsg" role="alert" style="display:none;">Nenhum lançamento encontrado para o período e o centro de custo selecionados.</div>
+
+    <div class="export-pdf-actions">
+      <button type="button" id="exportPdfCancel">Cancelar</button>
+      <button type="button" id="exportPdfGenerate" class="export-pdf-generate">Gerar PDF</button>
+    </div>
+  </dialog>
 
   <!-- ======================= PÁGINA 1 — VISÃO ANUAL ======================= -->
   <div id="pageAnnual">
@@ -529,6 +731,8 @@
   <footer style="margin-top:4px;">Desenvolvido por <a href="https://github.com/andrescultori" target="_blank" rel="noopener" style="color:inherit;">André Scultori</a> &middot; &copy; 2026 &middot; <a href="https://github.com/andrescultori/financeiro-um" target="_blank" rel="noopener" style="color:inherit;">GitHub</a></footer>
 </div>
 </div>
+
+<div id="reportRoot" aria-hidden="true"></div>
 
 <script>
 /* Chart.js v4.4.4 — embutido localmente (sem dependência de CDN) */
@@ -1213,6 +1417,147 @@ function categoryEntries(catObj){
   return {creditEntries, debitEntries};
 }
 
+/* ============================= RELATÓRIO EM PDF ============================= */
+/* Núcleo de agregação por período arbitrário (mês/trimestre/ano/personalizado).
+   Trabalha direto sobre BASE_DATA.rows (as mesmas tuplas [data, centro,
+   categoria, credito, debito] já usadas por buildCostCenterFilteredData) —
+   não duplica a lógica de arredondamento/formatação (round2, fmtBRL*) nem a
+   de variação (computeVariation), só adiciona o recorte por intervalo de
+   datas que as estruturas pré-computadas do dashboard (DATA.monthly/daily,
+   por ano/mês calendário) não oferecem. */
+
+const QUARTER_LABELS = ['1º trimestre', '2º trimestre', '3º trimestre', '4º trimestre'];
+const QUARTER_SHORT = ['1º tri', '2º tri', '3º tri', '4º tri'];
+
+function pad2(n){ return String(n).padStart(2, '0'); }
+function ymdStr(y, m, d){ return y + '-' + pad2(m) + '-' + pad2(d); }
+function daysInMonth(y, m){ return new Date(y, m, 0).getDate(); }
+function quarterOfMonth(m){ return Math.ceil(m / 3); }
+function fmtDateBR(ymd){ const [y, m, d] = ymd.split('-'); return d + '/' + m + '/' + y; }
+function dayBefore(ymd){ const d = new Date(ymd + 'T00:00:00'); d.setDate(d.getDate() - 1); return ymdStr(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
+function dayAfter(ymd){ const d = new Date(ymd + 'T00:00:00'); d.setDate(d.getDate() + 1); return ymdStr(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
+function daysBetween(a, b){ return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000) + 1; }
+function shiftYears(ymd, deltaYears){ const [y, m, d] = ymd.split('-').map(Number); const dt = new Date(y + deltaYears, m - 1, d); return ymdStr(dt.getFullYear(), dt.getMonth() + 1, dt.getDate()); }
+
+function rangeForMonth(y, m){ return { start: ymdStr(y, m, 1), end: ymdStr(y, m, daysInMonth(y, m)) }; }
+function rangeForQuarter(y, q){
+  const m0 = (q - 1) * 3 + 1;
+  return { start: ymdStr(y, m0, 1), end: ymdStr(y, m0 + 2, daysInMonth(y, m0 + 2)) };
+}
+function rangeForYear(y){ return { start: ymdStr(y, 1, 1), end: ymdStr(y, 12, 31) }; }
+
+function availableMonthKeysSorted(){ return Object.keys(BASE_DATA.monthly).sort(); }
+function availableDayKeysSorted(){ return Object.keys(BASE_DATA.daily).sort(); }
+
+function availableQuartersForYear(y){
+  const months = availableMonthKeysSorted().filter(k => k.startsWith(String(y)));
+  const quarters = new Set(months.map(k => quarterOfMonth(parseInt(k.split('-')[1], 10))));
+  return [...quarters].sort((a, b) => a - b);
+}
+
+function rowsInCostCenter(rows, cc){
+  return cc ? rows.filter(r => r[1] === cc) : rows;
+}
+function rowsInRange(rows, startStr, endStr){
+  return rows.filter(r => r[0] >= startStr && r[0] <= endStr);
+}
+
+function periodHasData(startStr, endStr, cc){
+  const rows = rowsInCostCenter(BASE_DATA.rows || [], cc);
+  return rowsInRange(rows, startStr, endStr).length > 0;
+}
+
+/* Agrega lançamentos no intervalo [startStr, endStr] (YYYY-MM-DD, inclusive),
+   já filtrados por centro de custo se `cc` for informado. */
+function aggregatePeriod(startStr, endStr, cc){
+  const rows = rowsInRange(rowsInCostCenter(BASE_DATA.rows || [], cc), startStr, endStr);
+  let credit = 0, debit = 0;
+  const byMonth = {}, byDay = {}, byCategory = {}, byCostCenter = {};
+  rows.forEach(row => {
+    const [date, rcc, cat, c, d] = row;
+    credit += c; debit += d;
+    const month = date.slice(0, 7);
+    if (!byMonth[month]) byMonth[month] = { credit: 0, debit: 0 };
+    byMonth[month].credit += c; byMonth[month].debit += d;
+    if (!byDay[date]) byDay[date] = { credit: 0, debit: 0 };
+    byDay[date].credit += c; byDay[date].debit += d;
+    if (!byCategory[cat]) byCategory[cat] = { credit: 0, debit: 0 };
+    byCategory[cat].credit += c; byCategory[cat].debit += d;
+    if (!byCostCenter[rcc]) byCostCenter[rcc] = { credit: 0, debit: 0 };
+    byCostCenter[rcc].credit += c; byCostCenter[rcc].debit += d;
+  });
+  [byMonth, byDay, byCategory, byCostCenter].forEach(bucket => {
+    Object.keys(bucket).forEach(k => { bucket[k].credit = round2(bucket[k].credit); bucket[k].debit = round2(bucket[k].debit); bucket[k].net = round2(bucket[k].credit + bucket[k].debit); });
+  });
+  credit = round2(credit); debit = round2(debit);
+  return { startStr, endStr, rowCount: rows.length, credit, debit, net: round2(credit + debit), byMonth, byDay, byCategory, byCostCenter };
+}
+
+/* Saldo inicial do período = opening_balance (origem dos dados) + todos os
+   lançamentos anteriores ao início do período (mesmo filtro de centro). */
+function openingBalanceAt(startStr, cc){
+  const rows = rowsInCostCenter(BASE_DATA.rows || [], cc);
+  const base = typeof BASE_DATA.opening_balance === 'number' ? BASE_DATA.opening_balance : 0;
+  let sum = 0;
+  rows.forEach(r => { if (r[0] < startStr) sum += r[3] + r[4]; });
+  return round2(base + sum);
+}
+
+/* Quebra por semana (buckets fixos de 7 dias a partir do dia 1), usada na
+   tabela-resumo quando o período é um único mês. */
+function weekBucketsOfMonth(y, m, byDay){
+  const total = daysInMonth(y, m);
+  const buckets = [];
+  for (let start = 1; start <= total; start += 7) {
+    const end = Math.min(start + 6, total);
+    let credit = 0, debit = 0;
+    for (let d = start; d <= end; d++) {
+      const key = ymdStr(y, m, d);
+      if (byDay[key]) { credit += byDay[key].credit; debit += byDay[key].debit; }
+    }
+    buckets.push({ label: 'Semana ' + (buckets.length + 1) + ' (' + pad2(start) + '–' + pad2(end) + ')', credit: round2(credit), debit: round2(debit) });
+  }
+  return buckets;
+}
+
+/* Últimos trimestre/mês/ano "completos" — sempre em relação à data real de
+   agora (não à data disponível nos dados), igual a nowMonthKey() do
+   Relatório Mensal: o relógio é o mesmo para as duas telas. */
+function computeDefaultQuarter(){
+  const now = new Date();
+  let y = now.getFullYear(), q = quarterOfMonth(now.getMonth() + 1) - 1;
+  if (q < 1) { q = 4; y -= 1; }
+  // Se o trimestre "completo" calculado não tem dado nenhum (datasets que
+  // terminam antes de hoje), cai pro último trimestre que realmente existe.
+  if (availableQuartersForYear(y).includes(q)) return { year: y, quarter: q };
+  const lastMonth = availableMonthKeysSorted().slice(-1)[0];
+  if (!lastMonth) return { year: y, quarter: q };
+  const [ly, lm] = lastMonth.split('-').map(Number);
+  return { year: ly, quarter: quarterOfMonth(lm) };
+}
+
+/* ---- Top categorias / centros de custo, para a página 2 do relatório ---- */
+function topCategoriesByVolume(byCategoryObj, n){
+  const entries = Object.entries(byCategoryObj).map(([name, v]) => ({
+    name, credit: v.credit, debit: v.debit, volume: v.credit + Math.abs(v.debit)
+  }));
+  entries.sort((a, b) => b.volume - a.volume);
+  const top = entries.slice(0, n);
+  const rest = entries.slice(n);
+  const others = rest.reduce((acc, e) => ({ credit: acc.credit + e.credit, debit: acc.debit + e.debit }), { credit: 0, debit: 0 });
+  return { top, othersCount: rest.length, others: { credit: round2(others.credit), debit: round2(others.debit) } };
+}
+
+function costCenterBreakdown(byCostCenterObj){
+  const entries = Object.entries(byCostCenterObj).map(([name, v]) => ({
+    name, credit: v.credit, debit: v.debit, net: round2(v.credit + v.debit), volume: v.credit + Math.abs(v.debit)
+  }));
+  const totalVolume = entries.reduce((s, e) => s + e.volume, 0);
+  entries.sort((a, b) => b.volume - a.volume);
+  entries.forEach(e => { e.participation = totalVolume > 0 ? round2(e.volume / totalVolume * 100) : 0; });
+  return entries;
+}
+
 function renderAnnual(year){
   currentYear = year;
   const series = computeYearSeries(year);
@@ -1338,28 +1683,36 @@ function nowMonthKey(){
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
 
-function renderMonthVariation(elId, cur, prev, prevMonthKey, metric, inProgress){
-  const el = document.getElementById(elId);
-  el.innerHTML = '';
-  if (prev === null || prev === undefined) return;
+/* Núcleo puro da variação (sem DOM, sem rótulo) — usado tanto pelos cartões
+   do Relatório Mensal quanto pelos KPIs do relatório em PDF, para nunca
+   divergir a definição de "bom/ruim", zero-anterior e mudança de sinal. */
+function computeVariation(cur, prev, metric){
+  if (prev === null || prev === undefined) return null;
   const curRef = metric === 'debit' ? Math.abs(cur) : cur;
   const prevRef = metric === 'debit' ? Math.abs(prev) : prev;
-  if (prevRef === 0) return;
+  if (prevRef === 0) return null;
   const diff = curRef - prevRef;
   const goodDirection = metric !== 'debit';
   const isUp = diff >= 0;
   const isGood = isUp === goodDirection;
   const arrow = isUp ? '▲' : '▼';
-  const colorClass = isGood ? 'kpi-var-pos' : 'kpi-var-neg';
-  const [, pm] = prevMonthKey.split('-');
-  const prevLabel = MONTH_FULL[parseInt(pm, 10) - 1].toLowerCase();
   const signChanged = metric === 'saldo' && ((prevRef > 0 && curRef < 0) || (prevRef < 0 && curRef > 0));
   const valueText = signChanged
-    ? fmtBRL(Math.abs(diff)) + ' vs. ' + prevLabel
-    : Math.abs(diff / prevRef * 100).toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + '% vs. ' + prevLabel;
+    ? fmtBRL(Math.abs(diff))
+    : Math.abs(diff / prevRef * 100).toLocaleString('pt-BR', {minimumFractionDigits:1, maximumFractionDigits:1}) + '%';
+  return { arrow, isGood, valueText, signChanged };
+}
+
+function renderMonthVariation(elId, cur, prev, prevMonthKey, metric, inProgress){
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  const v = computeVariation(cur, prev, metric);
+  if (!v) return;
+  const [, pm] = prevMonthKey.split('-');
+  const prevLabel = MONTH_FULL[parseInt(pm, 10) - 1].toLowerCase();
   const span = document.createElement('span');
-  span.className = colorClass;
-  span.textContent = arrow + ' ' + valueText;
+  span.className = v.isGood ? 'kpi-var-pos' : 'kpi-var-neg';
+  span.textContent = v.arrow + ' ' + v.valueText + ' vs. ' + prevLabel;
   el.appendChild(span);
   if (inProgress) {
     const note = document.createElement('span');
@@ -1520,10 +1873,524 @@ function formatUpdatedAt(iso){
     ' às ' + parts.hour + ':' + parts.minute;
 }
 
+/* ---- Meses/dias zero-preenchidos de um intervalo (o próprio agregado só
+   tem chaves para quem teve lançamento; o relatório precisa mostrar os
+   meses/dias sem movimento também, como o resto do dashboard já faz). ---- */
+function monthsInRange(startStr, endStr){
+  let [y, m] = startStr.slice(0, 7).split('-').map(Number);
+  const [ey, em] = endStr.slice(0, 7).split('-').map(Number);
+  const out = [];
+  while (y < ey || (y === ey && m <= em)) {
+    out.push(y + '-' + pad2(m));
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  return out;
+}
+function escapeXml(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+const RP_CREDIT = '#7B5BC8', RP_DEBIT = '#E8731A', RP_SALDO = '#D6336C';
+
+/* Períodos de comparação: "anterior equivalente" (mês/trimestre/ano
+   imediatamente anterior, ou intervalo de mesma duração para Personalizado)
+   e "mesmo período do ano anterior". Para Ano os dois coincidem, então só
+   um é retornado (o outro vem null e é ignorado por quem usa). */
+function comparisonRanges(range){
+  if (range.type === 'month') {
+    const d = new Date(range.y, range.m - 1, 1);
+    d.setMonth(d.getMonth() - 1);
+    const prevEq = rangeForMonth(d.getFullYear(), d.getMonth() + 1);
+    return {
+      prevEquivalent: { ...prevEq, label: 'vs. ' + MONTH_ABBR[d.getMonth()] },
+      prevYear: { ...rangeForMonth(range.y - 1, range.m), label: 'vs. ' + MONTH_ABBR[range.m - 1] + '/' + (range.y - 1) }
+    };
+  }
+  if (range.type === 'quarter') {
+    let py = range.y, pq = range.q - 1;
+    if (pq < 1) { pq = 4; py -= 1; }
+    return {
+      prevEquivalent: { ...rangeForQuarter(py, pq), label: 'vs. ' + QUARTER_SHORT[pq - 1] },
+      prevYear: { ...rangeForQuarter(range.y - 1, range.q), label: 'vs. ' + QUARTER_SHORT[range.q - 1] + '/' + (range.y - 1) }
+    };
+  }
+  if (range.type === 'year') {
+    return { prevEquivalent: { ...rangeForYear(range.y - 1), label: 'vs. ' + (range.y - 1) }, prevYear: null };
+  }
+  // custom
+  const len = daysBetween(range.start, range.end);
+  const prevEnd = dayBefore(range.start);
+  const prevEndDate = new Date(prevEnd + 'T00:00:00');
+  prevEndDate.setDate(prevEndDate.getDate() - (len - 1));
+  const prevStart = ymdStr(prevEndDate.getFullYear(), prevEndDate.getMonth() + 1, prevEndDate.getDate());
+  return {
+    prevEquivalent: { start: prevStart, end: prevEnd, label: 'vs. período anterior' },
+    prevYear: { start: shiftYears(range.start, -1), end: shiftYears(range.end, -1), label: 'vs. mesmo período do ano anterior' }
+  };
+}
+
+function kpiVariationLines(curValue, metric, comparisons, cc){
+  const lines = [];
+  [comparisons.prevEquivalent, comparisons.prevYear].forEach(comp => {
+    if (!comp) return;
+    if (!periodHasData(comp.start, comp.end, cc)) return;
+    const agg = aggregatePeriod(comp.start, comp.end, cc);
+    const prevValue = metric === 'credit' ? agg.credit : metric === 'debit' ? agg.debit : agg.net;
+    const v = computeVariation(curValue, prevValue, metric);
+    if (!v) return;
+    lines.push({ text: v.arrow + ' ' + v.valueText + ' ' + comp.label, isGood: v.isGood });
+  });
+  return lines;
+}
+
+function periodLabelFor(range){
+  if (range.type === 'month') return MONTH_FULL[range.m - 1] + ' de ' + range.y;
+  if (range.type === 'quarter') {
+    const m0 = (range.q - 1) * 3 + 1;
+    return QUARTER_LABELS[range.q - 1] + ' de ' + range.y + ' · ' + MONTH_FULL[m0 - 1].toLowerCase() + ' a ' + MONTH_FULL[m0 + 1].toLowerCase();
+  }
+  if (range.type === 'year') return 'Ano de ' + range.y;
+  return fmtDateBR(range.start) + ' a ' + fmtDateBR(range.end);
+}
+
+function reportFileNameSuffix(range){
+  if (range.type === 'month') return range.y + '-' + pad2(range.m);
+  if (range.type === 'quarter') return range.y + '-T' + range.q;
+  if (range.type === 'year') return String(range.y);
+  return range.start + '_a_' + range.end;
+}
+
+/* Monta toda a base de dados do relatório para um período+centro de custo —
+   reaproveita aggregatePeriod/openingBalanceAt/computeVariation/
+   topCategoriesByVolume/costCenterBreakdown; não refaz nenhuma conta nova
+   além do recorte por data que essas funções já fazem. */
+function buildReportData(range, cc){
+  const agg = aggregatePeriod(range.start, range.end, cc);
+  const opening = openingBalanceAt(range.start, cc);
+  const comparisons = comparisonRanges(range);
+  const singleMonth = range.start.slice(0, 7) === range.end.slice(0, 7);
+
+  let subPeriods, chartLabels, chartCredit, chartDebit, chartCum;
+  if (singleMonth) {
+    const [y, m] = range.start.slice(0, 7).split('-').map(Number);
+    const buckets = weekBucketsOfMonth(y, m, agg.byDay);
+    let running = opening;
+    subPeriods = buckets.map(b => { running = round2(running + b.credit + b.debit); return { label: b.label, credit: b.credit, debit: b.debit, net: round2(b.credit + b.debit), cum: running }; });
+
+    const days = []; for (let d = 1; d <= daysInMonth(y, m); d++) days.push(ymdStr(y, m, d));
+    running = opening; chartLabels = []; chartCredit = []; chartDebit = []; chartCum = [];
+    days.forEach(d => {
+      const v = agg.byDay[d] || { credit: 0, debit: 0 };
+      running = round2(running + v.credit + v.debit);
+      chartLabels.push(d.slice(8, 10)); chartCredit.push(v.credit); chartDebit.push(v.debit); chartCum.push(running);
+    });
+  } else {
+    const months = monthsInRange(range.start, range.end);
+    let running = opening;
+    subPeriods = months.map(mk => {
+      const v = agg.byMonth[mk] || { credit: 0, debit: 0 };
+      running = round2(running + v.credit + v.debit);
+      return { label: MONTH_ABBR[parseInt(mk.split('-')[1], 10) - 1] + '/' + mk.slice(0, 4), credit: round2(v.credit), debit: round2(v.debit), net: round2(v.credit + v.debit), cum: running };
+    });
+    chartLabels = subPeriods.map(s => s.label);
+    chartCredit = subPeriods.map(s => s.credit);
+    chartDebit = subPeriods.map(s => s.debit);
+    chartCum = subPeriods.map(s => s.cum);
+  }
+
+  const topCats = topCategoriesByVolume(agg.byCategory, 5);
+  const ccRows = cc ? [] : costCenterBreakdown(agg.byCostCenter);
+
+  return { range, cc, agg, opening, comparisons, subPeriods, singleMonth, chartLabels, chartCredit, chartDebit, chartCum, topCats, ccRows };
+}
+
+/* Gráfico de barras divergentes (entradas/saídas) + linha de saldo
+   acumulado, em SVG puro (sem canvas) — fica nítido em qualquer resolução
+   de impressão. */
+function buildReportChartSVG(labels, credits, debits, cum){
+  const W = 760, H = 250;
+  const padL = 46, padR = 14, padT = 22, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const n = labels.length || 1;
+  const allVals = [0, ...credits, ...debits, ...cum];
+  let minVal = Math.min(...allVals), maxVal = Math.max(...allVals);
+  const span = (maxVal - minVal) || 1;
+  minVal -= span * 0.12; maxVal += span * 0.14;
+  const yOf = (v) => padT + plotH - ((v - minVal) / (maxVal - minVal)) * plotH;
+  const y0 = yOf(0);
+  const bandW = plotW / n;
+  const barW = Math.min(bandW * 0.5, 46);
+
+  const gridLines = [];
+  const ticks = 5;
+  for (let t = 0; t <= ticks; t++) {
+    const v = minVal + (maxVal - minVal) * (t / ticks);
+    const y = yOf(v);
+    gridLines.push('<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '" stroke="#EEEEF3" stroke-width="1"/>');
+    gridLines.push('<text x="' + (padL - 6) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="end" font-size="9" fill="#8A8A9A" font-family="Inter,sans-serif">' + fmtCompact(v) + '</text>');
+  }
+
+  // Com muitas colunas (visão diária, até 31 dias), rótulo numérico em toda
+  // barra/ponto vira ruído ilegível (texto sobre texto) — nesse caso rotula
+  // só um subconjunto espaçado de dias (eixo X e valores juntos), em vez de
+  // ou tudo ou nada, pra ainda dar alguma referência numérica no gráfico.
+  const labelStep = n > 12 ? Math.ceil(n / 10) : 1;
+  const shouldLabel = (i) => i % labelStep === 0 || i === n - 1;
+
+  const bars = [], barLabels = [], points = [];
+  labels.forEach((label, i) => {
+    const cx = padL + bandW * (i + 0.5);
+    const c = credits[i], d = debits[i];
+    const labelHere = shouldLabel(i);
+    if (c) {
+      const yC = yOf(c);
+      bars.push('<rect x="' + (cx - barW / 2).toFixed(1) + '" y="' + yC.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + (y0 - yC).toFixed(1) + '" rx="2" fill="' + RP_CREDIT + '"/>');
+      if (labelHere) barLabels.push('<text x="' + cx.toFixed(1) + '" y="' + (yC - 5).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="600" fill="#5A3FA0" font-family="Inter,sans-serif">' + fmtCompact(c) + '</text>');
+    }
+    if (d) {
+      const yD = yOf(d);
+      bars.push('<rect x="' + (cx - barW / 2).toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + (yD - y0).toFixed(1) + '" rx="2" fill="' + RP_DEBIT + '"/>');
+      if (labelHere) barLabels.push('<text x="' + cx.toFixed(1) + '" y="' + (yD + 13).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="600" fill="#A85314" font-family="Inter,sans-serif">' + fmtCompact(d) + '</text>');
+    }
+    points.push([cx, yOf(cum[i])]);
+    if (labelHere) barLabels.push('<text x="' + cx.toFixed(1) + '" y="' + (H - padB + 16) + '" text-anchor="middle" font-size="9.5" fill="#5B5B6B" font-family="Inter,sans-serif">' + escapeXml(label) + '</text>');
+  });
+
+  const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const lineEls = points.map((p, i) =>
+    '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.4" fill="' + RP_SALDO + '"/>' +
+    (shouldLabel(i) ? '<text x="' + p[0].toFixed(1) + '" y="' + (p[1] - 9).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="700" fill="' + RP_SALDO + '" font-family="Inter,sans-serif">' + fmtBRL(cum[i]) + '</text>' : '')
+  ).join('');
+
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">' +
+    '<line x1="' + padL + '" y1="' + y0.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y0.toFixed(1) + '" stroke="#D8D8E2" stroke-width="1"/>' +
+    gridLines.join('') + bars.join('') +
+    '<path d="' + linePath + '" fill="none" stroke="' + RP_SALDO + '" stroke-width="2"/>' +
+    lineEls + barLabels.join('') +
+    '</svg>';
+}
+
+function rpVarHtml(lines){
+  if (!lines.length) return '';
+  return lines.map(l => '<div class="report-kpi-var ' + (l.isGood ? 'pos' : 'neg') + '">' + escapeXml(l.text) + '</div>').join('');
+}
+
+function rpBarCell(value, max, kind){
+  const pct = max > 0 ? Math.min(100, Math.abs(value) / max * 100) : 0;
+  return '<div>' + fmtBRLsigned(value) + '</div><div class="rp-bar-track"><div class="rp-bar-fill rp-' + kind + '-fill" style="width:' + pct.toFixed(1) + '%"></div></div>';
+}
+
+function renderCategoryTableRows(topCats){
+  const maxCredit = Math.max(1, ...topCats.top.map(c => c.credit), topCats.others.credit);
+  const maxDebit = Math.max(1, ...topCats.top.map(c => Math.abs(c.debit)), Math.abs(topCats.others.debit));
+  let totalCredit = 0, totalDebit = 0;
+  const rows = topCats.top.map((c, i) => {
+    totalCredit += c.credit; totalDebit += c.debit;
+    return '<tr>' +
+      '<td>' + (i + 1) + '</td>' +
+      '<td class="rp-cat-name" title="' + escapeXml(c.name) + '">' + escapeXml(c.name) + '</td>' +
+      '<td class="rp-credit">' + (c.credit ? rpBarCell(c.credit, maxCredit, 'credit') : '—') + '</td>' +
+      '<td class="rp-debit">' + (c.debit ? rpBarCell(c.debit, maxDebit, 'debit') : '—') + '</td>' +
+      '<td class="' + (c.credit + c.debit >= 0 ? 'rp-pos' : 'rp-neg') + '">' + fmtBRLsigned(round2(c.credit + c.debit)) + '</td>' +
+      '</tr>';
+  }).join('');
+  totalCredit += topCats.others.credit; totalDebit += topCats.others.debit;
+  const othersRow = topCats.othersCount > 0
+    ? '<tr><td></td><td class="rp-cat-name">Demais categorias (' + topCats.othersCount + ')</td>' +
+      '<td class="rp-credit">' + fmtBRLsigned(topCats.others.credit) + '</td>' +
+      '<td class="rp-debit">' + fmtBRLsigned(topCats.others.debit) + '</td>' +
+      '<td class="' + (topCats.others.credit + topCats.others.debit >= 0 ? 'rp-pos' : 'rp-neg') + '">' + fmtBRLsigned(round2(topCats.others.credit + topCats.others.debit)) + '</td></tr>'
+    : '';
+  const totalRow = '<tr><td></td><td><strong>Total do período</strong></td>' +
+    '<td class="rp-credit"><strong>' + fmtBRLsigned(round2(totalCredit)) + '</strong></td>' +
+    '<td class="rp-debit"><strong>' + fmtBRLsigned(round2(totalDebit)) + '</strong></td>' +
+    '<td class="' + (totalCredit + totalDebit >= 0 ? 'rp-pos' : 'rp-neg') + '"><strong>' + fmtBRLsigned(round2(totalCredit + totalDebit)) + '</strong></td></tr>';
+  return rows + othersRow + totalRow;
+}
+
+function renderCostCenterTableRows(ccRows){
+  return ccRows.map(r =>
+    '<tr>' +
+    '<td class="rp-cat-name" title="' + escapeXml(r.name) + '">' + escapeXml(r.name) + '</td>' +
+    '<td class="rp-credit">' + fmtBRLsigned(r.credit) + '</td>' +
+    '<td class="rp-debit">' + fmtBRLsigned(r.debit) + '</td>' +
+    '<td class="' + (r.net >= 0 ? 'rp-pos' : 'rp-neg') + '">' + fmtBRLsigned(r.net) + '</td>' +
+    '<td><div>' + r.participation.toLocaleString('pt-BR', {maximumFractionDigits:0}) + '%</div>' +
+    '<div class="rp-bar-track"><div class="rp-bar-fill rp-credit-fill" style="width:' + Math.min(100, r.participation).toFixed(1) + '%"></div></div></td>' +
+    '</tr>'
+  ).join('');
+}
+
+function renderSubPeriodRows(subPeriods){
+  return subPeriods.map(s =>
+    '<tr><td>' + escapeXml(s.label) + '</td>' +
+    '<td class="rp-credit">' + fmtBRL2(s.credit) + '</td>' +
+    '<td class="rp-debit">' + fmtBRLsigned(s.debit) + '</td>' +
+    '<td class="' + (s.net >= 0 ? 'rp-pos' : 'rp-neg') + '">' + fmtBRLsigned(s.net) + '</td>' +
+    '<td class="' + (s.cum >= 0 ? 'rp-pos' : 'rp-neg') + '">' + fmtBRL2(s.cum) + '</td></tr>'
+  ).join('');
+}
+
+function renderReportHTML(data){
+  const { range, cc, agg, opening, subPeriods, chartLabels, chartCredit, chartDebit, chartCum, topCats, ccRows } = data;
+  const periodTypeTitle = { month: 'Mensal', quarter: 'Trimestral', year: 'Anual', custom: 'Personalizado' }[range.type];
+  const ccLabel = cc || 'Todos os centros de custo';
+  const now = new Date();
+  const generatedAt = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const finalCum = subPeriods.length ? subPeriods[subPeriods.length - 1].cum : opening;
+
+  const creditVar = rpVarHtml(kpiVariationLines(agg.credit, 'credit', data.comparisons, cc));
+  const debitVar = rpVarHtml(kpiVariationLines(agg.debit, 'debit', data.comparisons, cc));
+  const resultVar = rpVarHtml(kpiVariationLines(agg.net, 'saldo', data.comparisons, cc));
+
+  const lastSubLabel = subPeriods.length ? subPeriods[subPeriods.length - 1].label : '';
+  const tableFirstCol = data.singleMonth ? 'SEMANA' : 'MÊS';
+
+  const headerBlock =
+    '<div class="report-header">' +
+      '<div class="report-header-brand">' +
+        '<img src="' + (document.querySelector('header .brand-mark-img')?.src || '') + '" alt="">' +
+        '<div><h1 class="report-title" id="rpTitle">Relatório Financeiro ' + periodTypeTitle + '</h1>' +
+        '<div class="report-subtitle" id="rpSubtitle">' + escapeXml(periodLabelFor(range)) + ' · ' + escapeXml(ccLabel) + '</div></div>' +
+      '</div>' +
+      '<div class="report-meta">' +
+        '<strong>UniMissional</strong><br>' +
+        'Gerado em <span id="rpGeneratedAt">' + generatedAt + '</span><br>' +
+        'Período: <span id="rpPeriodLine">' + fmtDateBR(range.start) + ' a ' + fmtDateBR(range.end) + '</span>' +
+      '</div>' +
+    '</div>';
+
+  const kpiBlock =
+    '<section class="report-kpis">' +
+      '<div class="report-kpi" style="--rp-kpi-color:' + RP_CREDIT + '"><div class="report-kpi-label">Entradas</div>' +
+        '<div class="report-kpi-value" id="rpKpiCredit" style="color:' + RP_CREDIT + '">' + fmtBRL(agg.credit) + '</div>' + creditVar + '</div>' +
+      '<div class="report-kpi" style="--rp-kpi-color:' + RP_DEBIT + '"><div class="report-kpi-label">Saídas</div>' +
+        '<div class="report-kpi-value" id="rpKpiDebit" style="color:' + RP_DEBIT + '">' + fmtBRLsigned(agg.debit) + '</div>' + debitVar + '</div>' +
+      '<div class="report-kpi" style="--rp-kpi-color:' + (agg.net >= 0 ? '#1C8A4B' : '#C92A2A') + '"><div class="report-kpi-label">Resultado do período</div>' +
+        '<div class="report-kpi-value" id="rpKpiResult" style="color:' + (agg.net >= 0 ? '#1C8A4B' : '#C92A2A') + '">' + fmtBRLsigned(agg.net) + '</div>' + resultVar + '</div>' +
+      '<div class="report-kpi" style="--rp-kpi-color:' + RP_SALDO + '"><div class="report-kpi-label">Saldo ao final do período</div>' +
+        '<div class="report-kpi-value" id="rpKpiSaldo" style="color:' + RP_SALDO + '">' + fmtBRLsigned(finalCum) + '</div>' +
+        '<div class="report-kpi-sub">Saldo inicial (' + fmtDateBR(range.start) + '): ' + fmtBRLsigned(opening) + '</div></div>' +
+    '</section>';
+
+  const chartBlock =
+    '<section class="report-panel">' +
+      '<div class="report-panel-title">Fluxo ' + (data.singleMonth ? 'diário' : (range.type === 'month' ? 'diário' : 'mensal')) + ' do período</div>' +
+      '<div class="report-panel-desc">Entradas e saídas, com a evolução do saldo acumulado</div>' +
+      '<div class="report-legend">' +
+        '<span><i style="background:' + RP_CREDIT + '"></i>Entradas</span>' +
+        '<span><i style="background:' + RP_DEBIT + '"></i>Saídas</span>' +
+        '<span><i style="background:' + RP_SALDO + '"></i>Saldo acumulado</span>' +
+      '</div>' +
+      buildReportChartSVG(chartLabels, chartCredit, chartDebit, chartCum) +
+    '</section>';
+
+  const summaryBlock =
+    '<section class="report-panel">' +
+      '<div class="report-panel-title">Resumo ' + (data.singleMonth ? 'semana a semana' : 'mês a mês') + '</div>' +
+      '<div class="report-panel-desc">Saldo inicial do período: ' + fmtBRLsigned(opening) + '</div>' +
+      '<table class="report-table" id="rpSummaryTable"><thead><tr>' +
+        '<th>' + tableFirstCol + '</th><th>Entradas</th><th>Saídas</th><th>Resultado</th><th>Saldo acumulado</th>' +
+      '</tr></thead><tbody id="rpTableBody">' + renderSubPeriodRows(subPeriods) + '</tbody>' +
+      '<tfoot><tr><td>' + ({ month: MONTH_FULL[range.m - 1] + '/' + range.y, quarter: 'Trimestre', year: 'Ano', custom: 'Período' }[range.type]) + '</td>' +
+        '<td class="rp-credit">' + fmtBRL2(agg.credit) + '</td><td class="rp-debit">' + fmtBRLsigned(agg.debit) + '</td>' +
+        '<td class="' + (agg.net >= 0 ? 'rp-pos' : 'rp-neg') + '">' + fmtBRLsigned(agg.net) + '</td>' +
+        '<td class="' + (finalCum >= 0 ? 'rp-pos' : 'rp-neg') + '">' + fmtBRL2(finalCum) + '</td></tr></tfoot>' +
+      '</table>' +
+    '</section>';
+
+  const footerLegal =
+    '<div class="report-footnote">Valores de créditos e débitos consolidados no período. Variações comparadas ao período anterior equivalente e ao mesmo período do ano anterior, quando há dados disponíveis para a comparação.' +
+    (cc ? ' Relatório restrito ao centro de custo "' + escapeXml(cc) + '".' : '') + '</div>';
+
+  const pageFooter = (pageNum) =>
+    '<div class="report-page-footer"><span>Confidencial · uso interno · adm.unimissional.org.br</span>' +
+    '<span>Desenvolvido por <a href="https://github.com/andrescultori">André Scultori</a> · © 2026 · <a href="https://github.com/andrescultori/financeiro-um">GitHub</a> · Pág. ' + pageNum + '/2</span></div>';
+
+  const categoriesBlock =
+    '<section class="report-panel">' +
+      '<div class="report-panel-title">5 maiores categorias do período</div>' +
+      '<div class="report-panel-desc">Ordenadas pelo volume movimentado (entradas + saídas)</div>' +
+      '<table class="report-table" id="rpCategoryTable"><thead><tr>' +
+        '<th></th><th>Categoria</th><th>Entradas</th><th>Saídas</th><th>Resultado</th>' +
+      '</tr></thead><tbody id="rpCatTableBody">' + renderCategoryTableRows(topCats) + '</tbody></table>' +
+    '</section>';
+
+  const costCenterBlock = cc ? '' :
+    '<section class="report-panel">' +
+      '<div class="report-panel-title">Por centro de custo</div>' +
+      '<div class="report-panel-desc">Participação no volume total movimentado</div>' +
+      '<table class="report-table" id="rpCcTable"><thead><tr>' +
+        '<th>Centro de custo</th><th>Entradas</th><th>Saídas</th><th>Resultado</th><th>Participação</th>' +
+      '</tr></thead><tbody id="rpCcTableBody">' + renderCostCenterTableRows(ccRows) + '</tbody></table>' +
+    '</section>';
+
+  return (
+    '<div class="report-page">' + headerBlock + kpiBlock + chartBlock + summaryBlock + pageFooter(1) + '</div>' +
+    '<div class="report-page">' + headerBlock + categoriesBlock + costCenterBlock + footerLegal + pageFooter(2) + '</div>'
+  );
+}
+
+function generateAndPrintReport(range, cc){
+  const data = buildReportData(range, cc);
+  const root = document.getElementById('reportRoot');
+  root.innerHTML = renderReportHTML(data);
+
+  const originalTitle = document.title;
+  document.title = 'Relatorio-Financeiro-' + reportFileNameSuffix(range);
+
+  function restoreTitle(){
+    document.title = originalTitle;
+    window.removeEventListener('afterprint', restoreTitle);
+  }
+  window.addEventListener('afterprint', restoreTitle);
+
+  const printNow = () => window.print();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(printNow);
+  } else {
+    printNow();
+  }
+}
+
+let exportPeriodType = 'quarter';
+
+function setupExportPdf(){
+  const btn = document.getElementById('exportPdfBtn');
+  if (!Array.isArray(BASE_DATA.rows) || !BASE_DATA.rows.length) { btn.style.display = 'none'; return; }
+  btn.style.display = '';
+
+  const dialog = document.getElementById('exportPdfDialog');
+  const typeButtons = [...document.querySelectorAll('.export-period-type-btn')];
+  const monthSel = document.getElementById('exportMonthSelect');
+  const quarterSel = document.getElementById('exportQuarterSelect');
+  const quarterYearSel = document.getElementById('exportQuarterYearSelect');
+  const yearSel = document.getElementById('exportYearSelect');
+  const customStart = document.getElementById('exportCustomStart');
+  const customEnd = document.getElementById('exportCustomEnd');
+  const ccSel = document.getElementById('exportCcSelect');
+  const ccField = document.getElementById('exportCcField');
+  const emptyMsg = document.getElementById('exportPdfEmptyMsg');
+
+  function showEmptyMsg(msg){ emptyMsg.textContent = msg || 'Nenhum lançamento encontrado para o período e o centro de custo selecionados.'; emptyMsg.style.display = 'block'; }
+  function hideEmptyMsg(){ emptyMsg.style.display = 'none'; }
+
+  function setPeriodType(type){
+    exportPeriodType = type;
+    typeButtons.forEach(b => {
+      const active = b.dataset.type === type;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+    document.getElementById('exportMonthFields').style.display = type === 'month' ? '' : 'none';
+    document.getElementById('exportQuarterFields').style.display = type === 'quarter' ? '' : 'none';
+    document.getElementById('exportYearFields').style.display = type === 'year' ? '' : 'none';
+    document.getElementById('exportCustomFields').style.display = type === 'custom' ? '' : 'none';
+    hideEmptyMsg();
+  }
+  typeButtons.forEach(b => b.addEventListener('click', () => setPeriodType(b.dataset.type)));
+
+  availableMonthKeysSorted().forEach(key => {
+    const [y, m] = key.split('-');
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = MONTH_FULL[parseInt(m, 10) - 1] + '/' + y;
+    monthSel.appendChild(opt);
+  });
+
+  BASE_DATA.years.forEach(y => {
+    const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+    quarterYearSel.appendChild(opt);
+  });
+  function populateQuarterOptions(y){
+    quarterSel.innerHTML = '';
+    availableQuartersForYear(y).forEach(q => {
+      const opt = document.createElement('option'); opt.value = q; opt.textContent = QUARTER_LABELS[q - 1];
+      quarterSel.appendChild(opt);
+    });
+  }
+  quarterYearSel.addEventListener('change', () => populateQuarterOptions(parseInt(quarterYearSel.value, 10)));
+
+  BASE_DATA.years.forEach(y => {
+    const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+    yearSel.appendChild(opt);
+  });
+
+  const minDate = availableDayKeysSorted()[0];
+  const maxDate = availableDayKeysSorted().slice(-1)[0];
+  customStart.min = minDate; customStart.max = maxDate;
+  customEnd.min = minDate; customEnd.max = maxDate;
+
+  const hasCostCenters = Array.isArray(BASE_DATA.cost_centers) && BASE_DATA.cost_centers.length > 0;
+  if (hasCostCenters) {
+    const optAll = document.createElement('option'); optAll.value = ''; optAll.textContent = 'Todos os centros de custo';
+    ccSel.appendChild(optAll);
+    BASE_DATA.cost_centers.forEach(cc => {
+      const opt = document.createElement('option'); opt.value = cc; opt.textContent = cc;
+      ccSel.appendChild(opt);
+    });
+  } else {
+    ccField.style.display = 'none';
+  }
+
+  function applyDialogDefaults(){
+    const def = computeDefaultQuarter();
+    const defRange = rangeForQuarter(def.year, def.quarter);
+    setPeriodType('quarter');
+    quarterYearSel.value = String(def.year);
+    populateQuarterOptions(def.year);
+    quarterSel.value = String(def.quarter);
+    monthSel.value = availableMonthKeysSorted().slice(-1)[0];
+    yearSel.value = String(BASE_DATA.years[BASE_DATA.years.length - 1]);
+    customStart.value = defRange.start;
+    customEnd.value = defRange.end;
+    if (hasCostCenters) ccSel.value = activeCostCenters.size === 1 ? [...activeCostCenters][0] : '';
+  }
+
+  function getExportPeriodRange(){
+    if (exportPeriodType === 'month') {
+      const [y, m] = monthSel.value.split('-').map(Number);
+      return { ...rangeForMonth(y, m), type: 'month', y, m };
+    }
+    if (exportPeriodType === 'quarter') {
+      const y = parseInt(quarterYearSel.value, 10), q = parseInt(quarterSel.value, 10);
+      return { ...rangeForQuarter(y, q), type: 'quarter', y, q };
+    }
+    if (exportPeriodType === 'year') {
+      const y = parseInt(yearSel.value, 10);
+      return { ...rangeForYear(y), type: 'year', y };
+    }
+    let start = customStart.value, end = customEnd.value;
+    if (!start || !end) { showEmptyMsg('Selecione as duas datas.'); return null; }
+    if (start > end) { const tmp = start; start = end; end = tmp; }
+    return { start, end, type: 'custom' };
+  }
+
+  btn.addEventListener('click', () => {
+    applyDialogDefaults();
+    hideEmptyMsg();
+    dialog.showModal();
+    (document.querySelector('.export-period-type-btn.active') || monthSel).focus();
+  });
+  document.getElementById('exportPdfCancel').addEventListener('click', () => dialog.close());
+
+  document.getElementById('exportPdfGenerate').addEventListener('click', () => {
+    const range = getExportPeriodRange();
+    if (!range) return;
+    const cc = hasCostCenters && ccSel.value ? ccSel.value : null;
+    if (!periodHasData(range.start, range.end, cc)) {
+      showEmptyMsg();
+      return;
+    }
+    hideEmptyMsg();
+    dialog.close();
+    generateAndPrintReport(range, cc);
+  });
+}
+
 function boot(){
   document.getElementById('periodNote').textContent = 'Período disponível: ' + DATA.period.min + ' – ' + DATA.period.max;
   document.getElementById('updatedNote').textContent = formatUpdatedAt(DATA_UPDATED_AT);
   setupCostCenterFilter();
+  setupExportPdf();
   setupNavTabs();
   setupYearToggle();
   setupMonthSelect();
