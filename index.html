@@ -395,8 +395,8 @@
     background:#fff;
   }
   @media print{
-    @page{ size:A4; margin:0; }
-    html, body{ background:#fff; }
+    @page{ size:A4 portrait; margin:0; }
+    html, body{ background:#fff; margin:0 !important; padding:0 !important; min-height:0 !important; }
     body > *:not(#reportRoot){ display:none !important; }
     #reportRoot{ display:block; }
     .report-page{ page-break-after:always; }
@@ -407,6 +407,15 @@
     width:210mm; min-height:297mm; background:#fff; position:relative;
     padding:15mm 14mm 11mm;
   }
+  .report-page.landscape{ width:297mm; min-height:210mm; padding:9mm 12mm 7mm; }
+  .report-page.landscape .report-kpis{ margin-bottom:3.5mm; }
+  .report-page.landscape .report-kpi{ min-height:19mm; padding:2mm 3.5mm; }
+  .report-page.landscape .report-panel{ padding:2.8mm 4.5mm; margin-bottom:3.5mm; }
+  .report-page.landscape .report-header{ margin-bottom:3mm; padding-bottom:2mm; }
+  /* Paisagem é mais larga, mas bem mais baixa (210mm) — o gráfico, que
+     escala pela largura (width:100%; height:auto), cresceria demais e
+     estouraria a altura da página se não for limitado. */
+  .report-page.landscape .report-chart-svg{ max-height:38mm; width:auto; display:block; margin:0 auto; }
   .report-page::before{
     content:''; position:absolute; top:0; left:0; right:0; height:4mm;
     background:linear-gradient(90deg, var(--rp-credit), var(--rp-saldo), var(--rp-debit));
@@ -586,6 +595,14 @@
     <div class="export-pdf-field" id="exportCcField">
       <label for="exportCcSelect">Centro de custo</label>
       <select id="exportCcSelect"></select>
+    </div>
+
+    <div class="export-pdf-field">
+      <span class="export-pdf-field-label">Orientação da página</span>
+      <div class="export-pdf-period-types" id="exportOrientationTypes" role="radiogroup" aria-label="Orientação da página">
+        <button type="button" class="export-period-type-btn" data-orientation="portrait" role="radio">Retrato</button>
+        <button type="button" class="export-period-type-btn" data-orientation="landscape" role="radio">Paisagem</button>
+      </div>
     </div>
 
     <div class="export-pdf-empty" id="exportPdfEmptyMsg" role="alert" style="display:none;">Nenhum lançamento encontrado para o período e o centro de custo selecionados.</div>
@@ -2060,7 +2077,7 @@ function buildReportChartSVG(labels, credits, debits, cum){
     (shouldLabel(i) ? '<text x="' + p[0].toFixed(1) + '" y="' + (p[1] - 9).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="700" fill="' + RP_SALDO + '" font-family="Inter,sans-serif">' + fmtBRL(cum[i]) + '</text>' : '')
   ).join('');
 
-  return '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">' +
+  return '<svg class="report-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">' +
     '<line x1="' + padL + '" y1="' + y0.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y0.toFixed(1) + '" stroke="#D8D8E2" stroke-width="1"/>' +
     gridLines.join('') + bars.join('') +
     '<path d="' + linePath + '" fill="none" stroke="' + RP_SALDO + '" stroke-width="2"/>' +
@@ -2129,8 +2146,9 @@ function renderSubPeriodRows(subPeriods){
   ).join('');
 }
 
-function renderReportHTML(data){
+function renderReportHTML(data, orientation){
   const { range, cc, agg, opening, subPeriods, chartLabels, chartCredit, chartDebit, chartCum, topCats, ccRows } = data;
+  const pageClass = 'report-page' + (orientation === 'landscape' ? ' landscape' : '');
   const periodTypeTitle = { month: 'Mensal', quarter: 'Trimestral', year: 'Anual', custom: 'Personalizado' }[range.type];
   const ccLabel = cc || 'Todos os centros de custo';
   const now = new Date();
@@ -2144,19 +2162,23 @@ function renderReportHTML(data){
   const lastSubLabel = subPeriods.length ? subPeriods[subPeriods.length - 1].label : '';
   const tableFirstCol = data.singleMonth ? 'SEMANA' : 'MÊS';
 
-  const headerBlock =
+  // Repetido nas duas páginas — só a 1ª leva os ids (duplicar id no HTML
+  // é inválido, e nada depende do id na página 2).
+  const headerBlockFor = (withIds) =>
     '<div class="report-header">' +
       '<div class="report-header-brand">' +
         '<img src="' + (document.querySelector('header .brand-mark-img')?.src || '') + '" alt="">' +
-        '<div><h1 class="report-title" id="rpTitle">Relatório Financeiro ' + periodTypeTitle + '</h1>' +
-        '<div class="report-subtitle" id="rpSubtitle">' + escapeXml(periodLabelFor(range)) + ' · ' + escapeXml(ccLabel) + '</div></div>' +
+        '<div><h1 class="report-title"' + (withIds ? ' id="rpTitle"' : '') + '>Relatório Financeiro ' + periodTypeTitle + '</h1>' +
+        '<div class="report-subtitle"' + (withIds ? ' id="rpSubtitle"' : '') + '>' + escapeXml(periodLabelFor(range)) + ' · ' + escapeXml(ccLabel) + '</div></div>' +
       '</div>' +
       '<div class="report-meta">' +
         '<strong>UniMissional</strong><br>' +
-        'Gerado em <span id="rpGeneratedAt">' + generatedAt + '</span><br>' +
-        'Período: <span id="rpPeriodLine">' + fmtDateBR(range.start) + ' a ' + fmtDateBR(range.end) + '</span>' +
+        'Gerado em <span' + (withIds ? ' id="rpGeneratedAt"' : '') + '>' + generatedAt + '</span><br>' +
+        'Período: <span' + (withIds ? ' id="rpPeriodLine"' : '') + '>' + fmtDateBR(range.start) + ' a ' + fmtDateBR(range.end) + '</span>' +
       '</div>' +
     '</div>';
+  const headerBlock = headerBlockFor(true);
+  const headerBlockPage2 = headerBlockFor(false);
 
   const kpiBlock =
     '<section class="report-kpis">' +
@@ -2224,15 +2246,30 @@ function renderReportHTML(data){
     '</section>';
 
   return (
-    '<div class="report-page">' + headerBlock + kpiBlock + chartBlock + summaryBlock + pageFooter(1) + '</div>' +
-    '<div class="report-page">' + headerBlock + categoriesBlock + costCenterBlock + footerLegal + pageFooter(2) + '</div>'
+    '<div class="' + pageClass + '">' + headerBlock + kpiBlock + chartBlock + summaryBlock + pageFooter(1) + '</div>' +
+    '<div class="' + pageClass + '">' + headerBlockPage2 + categoriesBlock + costCenterBlock + footerLegal + pageFooter(2) + '</div>'
   );
 }
 
-function generateAndPrintReport(range, cc){
+/* @page é uma regra de topo de folha de estilo — não dá pra condicionar por
+   classe num seletor comum. Pra trocar a orientação em tempo real, substitui
+   o conteúdo de uma <style> dedicada; a última declaração de "size" na
+   cascata vence, então isso sobrepõe o "@page{size:A4 portrait}" padrão. */
+function setPrintOrientationStyle(orientation){
+  let styleEl = document.getElementById('printOrientationStyle');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'printOrientationStyle';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = orientation === 'landscape' ? '@page{ size:A4 landscape; margin:0; }' : '';
+}
+
+function generateAndPrintReport(range, cc, orientation){
   const data = buildReportData(range, cc);
   const root = document.getElementById('reportRoot');
-  root.innerHTML = renderReportHTML(data);
+  root.innerHTML = renderReportHTML(data, orientation);
+  setPrintOrientationStyle(orientation);
 
   const originalTitle = document.title;
   document.title = 'Relatorio-Financeiro-' + reportFileNameSuffix(range);
@@ -2252,6 +2289,7 @@ function generateAndPrintReport(range, cc){
 }
 
 let exportPeriodType = 'quarter';
+let exportOrientation = 'portrait';
 
 function setupExportPdf(){
   const btn = document.getElementById('exportPdfBtn');
@@ -2259,7 +2297,7 @@ function setupExportPdf(){
   btn.style.display = '';
 
   const dialog = document.getElementById('exportPdfDialog');
-  const typeButtons = [...document.querySelectorAll('.export-period-type-btn')];
+  const typeButtons = [...document.querySelectorAll('#exportPeriodTypes .export-period-type-btn')];
   const monthSel = document.getElementById('exportMonthSelect');
   const quarterSel = document.getElementById('exportQuarterSelect');
   const quarterYearSel = document.getElementById('exportQuarterYearSelect');
@@ -2287,6 +2325,17 @@ function setupExportPdf(){
     hideEmptyMsg();
   }
   typeButtons.forEach(b => b.addEventListener('click', () => setPeriodType(b.dataset.type)));
+
+  const orientationButtons = [...document.querySelectorAll('#exportOrientationTypes .export-period-type-btn')];
+  function setOrientation(orientation){
+    exportOrientation = orientation;
+    orientationButtons.forEach(b => {
+      const active = b.dataset.orientation === orientation;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+  }
+  orientationButtons.forEach(b => b.addEventListener('click', () => setOrientation(b.dataset.orientation)));
 
   availableMonthKeysSorted().forEach(key => {
     const [y, m] = key.split('-');
@@ -2343,6 +2392,7 @@ function setupExportPdf(){
     customStart.value = defRange.start;
     customEnd.value = defRange.end;
     if (hasCostCenters) ccSel.value = activeCostCenters.size === 1 ? [...activeCostCenters][0] : '';
+    setOrientation('portrait');
   }
 
   function getExportPeriodRange(){
@@ -2368,7 +2418,7 @@ function setupExportPdf(){
     applyDialogDefaults();
     hideEmptyMsg();
     dialog.showModal();
-    (document.querySelector('.export-period-type-btn.active') || monthSel).focus();
+    (document.querySelector('#exportPeriodTypes .export-period-type-btn.active') || monthSel).focus();
   });
   document.getElementById('exportPdfCancel').addEventListener('click', () => dialog.close());
 
@@ -2382,7 +2432,7 @@ function setupExportPdf(){
     }
     hideEmptyMsg();
     dialog.close();
-    generateAndPrintReport(range, cc);
+    generateAndPrintReport(range, cc, exportOrientation);
   });
 }
 
