@@ -58,7 +58,7 @@ test.describe('Exportar PDF — botão e diálogo', () => {
     await expect(page.locator('#exportPdfBtn')).toBeVisible();
     await page.locator('#exportPdfBtn').click();
     await expect(page.locator('#exportPdfDialog')).toBeVisible();
-    await expect(page.locator('.export-period-type-btn.active')).toHaveText('Trimestre');
+    await expect(page.locator('#exportPeriodTypes .export-period-type-btn.active')).toHaveText('Trimestre');
     await expect(page.locator('#exportQuarterYearSelect')).toHaveValue('2026');
     await expect(page.locator('#exportQuarterSelect')).toHaveValue('3');
   });
@@ -201,6 +201,84 @@ test.describe('Exportar PDF — conteúdo bate com os dados (teste automatizado)
     expect(shown.subtitle).toContain(targetCc);
     expectMoney(shown.credit, expected.credit);
     expect(shown.hasCcTable).toBe(false);
+  });
+});
+
+test.describe('Exportar PDF — orientação retrato/paisagem', () => {
+  test('padrão é retrato; o botão de orientação não deve afetar o tipo de período selecionado', async ({ page, baseURL }) => {
+    await loginForReport(page, baseURL);
+    await page.locator('#exportPdfBtn').click();
+    await expect(page.locator('.export-period-type-btn[data-orientation=portrait]')).toHaveClass(/active/);
+
+    // Regressão: os botões de orientação e os de tipo de período compartilham
+    // a mesma classe de estilo (.export-period-type-btn) — um já corrompeu o
+    // outro (clicar na orientação zerava o tipo de período pra undefined).
+    await page.locator('.export-period-type-btn[data-type=year]').click();
+    await page.locator('.export-period-type-btn[data-orientation=landscape]').click();
+    await page.locator('#exportPdfGenerate').click();
+    await page.waitForTimeout(150);
+    await expect(page.locator('#rpTitle')).toHaveText('Relatório Financeiro Anual');
+  });
+
+  test('paisagem muda o tamanho físico da página e o @page dinâmico', async ({ page, baseURL }) => {
+    await loginForReport(page, baseURL);
+    await page.locator('#exportPdfBtn').click();
+    await page.locator('.export-period-type-btn[data-orientation=landscape]').click();
+    await page.locator('#exportPdfGenerate').click();
+    await page.waitForTimeout(150);
+
+    await page.emulateMedia({ media: 'print' });
+    const info = await page.evaluate(() => {
+      const pages = [...document.querySelectorAll('.report-page')];
+      return {
+        allLandscapeClass: pages.every(p => p.classList.contains('landscape')),
+        widths: pages.map(p => Math.round(p.getBoundingClientRect().width)),
+        pageStyleHasLandscape: (document.getElementById('printOrientationStyle')?.textContent || '').includes('landscape'),
+      };
+    });
+    expect(info.allLandscapeClass).toBe(true);
+    expect(info.pageStyleHasLandscape).toBe(true);
+    // 297mm a 96dpi ≈ 1122,5px — página física deitada é mais larga que em pé.
+    info.widths.forEach(w => expect(w).toBeGreaterThan(1100));
+  });
+
+  test('voltar a abrir o diálogo reseta a orientação pra retrato', async ({ page, baseURL }) => {
+    await loginForReport(page, baseURL);
+    await page.locator('#exportPdfBtn').click();
+    await page.locator('.export-period-type-btn[data-orientation=landscape]').click();
+    await page.locator('#exportPdfCancel').click();
+    await page.locator('#exportPdfBtn').click();
+    await expect(page.locator('.export-period-type-btn[data-orientation=portrait]')).toHaveClass(/active/);
+  });
+
+  test('nenhuma página não ultrapassa a altura de uma folha A4 deitada (210mm) para mês/trimestre', async ({ page, baseURL }) => {
+    await loginForReport(page, baseURL);
+    for (const type of ['month', 'quarter']) {
+      await page.locator('#exportPdfBtn').click();
+      await page.locator('.export-period-type-btn[data-type=' + type + ']').click();
+      if (type === 'month') await page.locator('#exportMonthSelect').selectOption('2026-10');
+      await page.locator('.export-period-type-btn[data-orientation=landscape]').click();
+      await page.locator('#exportPdfGenerate').click();
+      await page.waitForTimeout(150);
+      await page.emulateMedia({ media: 'print' });
+      const heights = await page.locator('.report-page').evaluateAll(els => els.map(el => el.scrollHeight));
+      heights.forEach(h => expect(h, `tipo=${type}`).toBeLessThanOrEqual(800)); // 210mm a 96dpi ≈ 793,7px
+      await page.emulateMedia({ media: 'screen' });
+    }
+  });
+
+  test('gera PDF A4 paisagem (trimestre) — artefato pra revisão visual', async ({ page, baseURL }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'conteúdo do relatório não depende do viewport');
+    await loginForReport(page, baseURL);
+    await page.locator('#exportPdfBtn').click();
+    await page.locator('.export-period-type-btn[data-orientation=landscape]').click();
+    await page.locator('#exportPdfGenerate').click();
+    await page.waitForTimeout(150);
+    // preferCSSPageSize: sem isso, page.pdf() ignora o @page{size:A4 landscape}
+    // injetado dinamicamente e usa o formato padrão (retrato) do Playwright.
+    await page.pdf({ path: join(OUT_DIR, 'export-pdf-trimestre-paisagem-desktop.pdf'), printBackground: true, preferCSSPageSize: true });
+    await page.emulateMedia({ media: 'print' });
+    await page.screenshot({ path: join(OUT_DIR, 'export-pdf-trimestre-paisagem-desktop.png'), fullPage: true });
   });
 });
 
