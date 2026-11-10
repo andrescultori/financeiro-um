@@ -37,6 +37,16 @@ async function goToMonth(page, label) {
 }
 
 test.describe('Variação vs. mês anterior', () => {
+  // A fixture acima fixa outubro/2026 como "mês em andamento" (o mês mais
+  // recente, incompleto de propósito). Sem travar o relógio do navegador,
+  // esse teste vira uma bomba-relógio: passado outubro/2026 no mundo real,
+  // `nowMonthKey()` deixa de bater com a fixture. Instalamos o clock do
+  // Playwright para que `new Date()` dentro da página sempre veja essa data,
+  // independente de quando a suíte rodar de verdade.
+  test.beforeEach(async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-10-15T12:00:00Z') });
+  });
+
   test('créditos: alta é boa (verde) e mostra o percentual correto', async ({ page, baseURL }) => {
     await loginWithData(page, baseURL, FIXTURE);
     await goToMonth(page, 'Agosto/2026'); // 1000 vs 800 (jul) = +25,0%

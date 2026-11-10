@@ -32,6 +32,14 @@ Este app (`financeiro-um`) só verifica `sb.auth.getSession()` uma vez, em `init
 | `specs/month-variation.spec.js` | Variação vs. mês anterior: créditos/débitos/saldo, cores e setas, mudança de sinal (R$ em vez de %), sem mês anterior, valor anterior zero, nota "mês em andamento", respeito aos filtros ativos |
 | `specs/general.spec.js` | Data de atualização (`DATA_UPDATED_AT`) formatada em pt-BR/America-São_Paulo, e ausência de erros no console durante a navegação básica |
 | `specs/screenshots.spec.js` | Gera os screenshots em `screenshots/` (desktop 1440px e mobile 390px, anual e mensal, com e sem filtro) |
+| `specs/header-responsive.spec.js` | Cabeçalho (Tarefa A): nenhuma rolagem horizontal causada por ele em 1440/1024/768/390/320/1920px, com e sem filtro, nas duas páginas; e-mail truncado com `title` no celular; ordem da coluna única em ≤640px |
+| `specs/chart-tooltips.spec.js` | Tooltip/bolinha nas miniaturas (mês ou dia certo, valor em R$, raio 0 em repouso), crosshair + bolinha destacada nos gráficos grandes (só depois da animação de entrada, some ao tirar o mouse), toque (mobile, `hasTouch`) nas miniaturas e nos gráficos, e ausência de erros de console durante os hovers |
+
+## Cabeçalho e tooltips (Tarefa A/B)
+
+`header-responsive.spec.js` testa a garantia de "sem rolagem horizontal" checando que `header.getBoundingClientRect().right` (e o mesmo para a linha de chips) nunca ultrapassa a largura da viewport — e não o `scrollWidth` do documento inteiro. Isso é proposital: a tabela do "Fluxo mensal" já tinha, antes desta mudança e sem relação com o cabeçalho, uma rolagem própria em telas muito estreitas (abaixo de ~360px) por causa de `white-space:nowrap` nas células — ver "riscos conhecidos" no PR.
+
+`chart-tooltips.spec.js` lê o estado interno do Chart.js (`charts[canvasId].tooltip`, `.getActiveElements()`, `.$introDone`) via `page.evaluate()`, já que o tooltip e a linha-guia (crosshair) são desenhados no `<canvas>`, não no DOM — não dá para usar `expect(locator).toHaveText(...)` neles.
 
 ## Dados fictícios
 
